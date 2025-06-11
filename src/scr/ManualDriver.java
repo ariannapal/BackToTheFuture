@@ -3,7 +3,7 @@ package scr;
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.*;
-import java.lang.ModuleLayer.Controller;
+import scr.Controller;
 
 public class ManualDriver extends Controller {
 
@@ -47,14 +47,14 @@ public class ManualDriver extends Controller {
                     case KeyEvent.VK_S -> brake = true;
                     case KeyEvent.VK_A -> left = true;
                     case KeyEvent.VK_D -> right = true;
-                    case KeyEvent.VK_UP -> {
+                 /*    case KeyEvent.VK_UP -> {
                         if (gear < 6)
                             gear++;
                     }
                     case KeyEvent.VK_DOWN -> {
                         if (gear > -1)
                             gear--;
-                    }
+                    }  */
 
                     case KeyEvent.VK_1 -> {
                         recording = true;
@@ -106,7 +106,7 @@ public class ManualDriver extends Controller {
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "DistFromStart,TrackLeft, TrackCenterLeft, TrackCenter, TrackCenterRight, TrackRight,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering, Gear\n");
+                                    "DistFromStart,TrackLeft, TrackCenterLeft, TrackCenter, TrackCenterRight, TrackRight,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering \n");
 
                         }
                         double[] trackSensors = sensors.getTrackEdgeSensors();
@@ -125,8 +125,7 @@ public class ManualDriver extends Controller {
                                         speedY + "," +
                                         action.accelerate + "," +
                                         action.brake + "," +
-                                        action.steering + "," +
-                                        action.gear + "\n");
+                                        action.steering + "\n");
                     }
 
                 } catch (IOException e) {
@@ -217,45 +216,45 @@ private int getGear(SensorModel sensors) {
         // --- Accelerazione e frenata ---
 
         if (accel) {
-            currentAccel += 0.2;
-            if (currentAccel > 1)
-                currentAccel = 1;
+            currentAccel += 0.2f;
+            if (currentAccel > 1f)
+                currentAccel = 1f;
         }
 
         if (brake) {
-            currentAccel = Math.max(0, currentAccel - 0.4); // frenata = riduzione accelerazione
-            currentBrake += 0.2;
-            if (currentBrake > 1)
-                currentBrake = 1;
+            currentAccel = Math.max(0f, currentAccel - 0.4f); // frenata = riduzione accelerazione
+            currentBrake += 0.2f;
+            if (currentBrake > 1f)
+                currentBrake = 1f;
         } else {
-            currentBrake -= 0.3;
-            if (currentBrake < 0)
-                currentBrake = 0;
+            currentBrake -= 0.3f;
+            if (currentBrake < 0f)
+                currentBrake = 0f;
         }
 
         // Decelerazione naturale se né accell né freno
         if (!accel && !brake) {
-            currentAccel = Math.max(0, currentAccel - 0.2);
+            currentAccel = Math.max(0f, currentAccel - 0.2f);
         }
 
         // --- Sterzo ---
         if (left) {
-            steering += 0.2;
-            if (steering > 1)
-                steering = 1;
+            steering += 0.2f;
+            if (steering > 1f)
+                steering = 1f;
         } else if (right) {
-            steering -= 0.2;
-            if (steering < -1)
-                steering = -1;
+            steering -= 0.2f;
+            if (steering < -1f)
+                steering = -1f;
         } else {
-            if (steering > 0) {
-                steering -= 0.5;
-                if (steering < 0)
-                    steering = 0;
-            } else if (steering < 0) {
-                steering += 0.5;
-                if (steering > 0)
-                    steering = 0;
+            if (steering > 0f) {
+                steering -= 0.5f;
+                if (steering < 0f)
+                    steering = 0f;
+            } else if (steering < 0f) {
+                steering += 0.5f;
+                if (steering > 0f)
+                    steering = 0f;
             }
         }
     }
