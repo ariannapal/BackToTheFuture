@@ -35,6 +35,18 @@ public class KNNClassifier {
         this.kdtree = new KDTree(trainingData);
     }
 
+    // Costruttore che accetta direttamente i dati di addestramento
+    // già normalizzati e le etichette
+    // (utilizzato per testare il classificatore con dati già pronti)
+    public KNNClassifier(List<Sample> trainingData, int k) {
+        this.trainingData = new ArrayList<>(trainingData);
+        this.k = k;
+
+        computeMinMax(this.trainingData);
+        normalizeSamples(this.trainingData);
+        this.kdtree = new KDTree(this.trainingData);
+    }
+
     private List<Sample> readRawSamples(String filename) {
         List<Sample> rawSamples = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
@@ -62,8 +74,10 @@ public class KNNClassifier {
 
         for (Sample s : samples) {
             for (int i = 0; i < numFeatures; i++) {
-                if (s.features[i] < featureMins[i]) featureMins[i] = s.features[i];
-                if (s.features[i] > featureMaxs[i]) featureMaxs[i] = s.features[i];
+                if (s.features[i] < featureMins[i])
+                    featureMins[i] = s.features[i];
+                if (s.features[i] > featureMaxs[i])
+                    featureMaxs[i] = s.features[i];
             }
         }
     }
@@ -97,13 +111,15 @@ public class KNNClassifier {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             for (int i = 0; i < featureMins.length; i++) {
                 writer.print(featureMins[i]);
-                if (i < featureMins.length - 1) writer.print(",");
+                if (i < featureMins.length - 1)
+                    writer.print(",");
             }
             writer.println();
 
             for (int i = 0; i < featureMaxs.length; i++) {
                 writer.print(featureMaxs[i]);
-                if (i < featureMaxs.length - 1) writer.print(",");
+                if (i < featureMaxs.length - 1)
+                    writer.print(",");
             }
             writer.println();
 
@@ -117,7 +133,7 @@ public class KNNClassifier {
     }
 
     public double[] predict(Sample testPoint) {
-        double[] originalFeatures = testPoint.features.clone();  // copia dati originali
+        double[] originalFeatures = testPoint.features.clone(); // copia dati originali
         double[] normalizedFeatures = normalizeFeatures(originalFeatures);
         testPoint.features = normalizedFeatures;
 
@@ -140,7 +156,8 @@ public class KNNClassifier {
         return result;
     }
 
-    private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures, double[] prediction) {
+    private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
+            double[] prediction) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
             // Scrivo intestazione solo la prima volta
             if (!logHeaderWritten) {
@@ -153,7 +170,8 @@ public class KNNClassifier {
                 }
                 for (int i = 0; i < prediction.length; i++) {
                     header.append("pred_").append(i);
-                    if (i < prediction.length - 1) header.append(",");
+                    if (i < prediction.length - 1)
+                        header.append(",");
                 }
                 writer.println(header.toString());
                 logHeaderWritten = true;
@@ -169,7 +187,8 @@ public class KNNClassifier {
             }
             for (int i = 0; i < prediction.length; i++) {
                 line.append(prediction[i]);
-                if (i < prediction.length - 1) line.append(",");
+                if (i < prediction.length - 1)
+                    line.append(",");
             }
             writer.println(line.toString());
 
