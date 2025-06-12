@@ -12,8 +12,8 @@ public class Sample {
         int n = parts.length;
 
 
-        features = new double[n - 3]; // Tutti tranne gli ultimi 3
-        targets = new double[3];      // Ultimi 3: accelerate, brake, steering
+        features = new double[n - 4]; // Tutti tranne gli ultimi 3
+        targets = new double[4];      // Ultimi 3: accelerate, brake, steering
 
 
         for (int i = 0; i < features.length; i++) {
@@ -21,9 +21,11 @@ public class Sample {
         }
 
 
-        targets[0] = Double.parseDouble(parts[n - 3].trim()); // accelerate
-        targets[1] = Double.parseDouble(parts[n - 2].trim()); // brake
-        targets[2] = Double.parseDouble(parts[n - 1].trim()); // steering
+        targets[0] = Double.parseDouble(parts[n - 4].trim()); // accelerate
+        targets[1] = Double.parseDouble(parts[n - 3].trim()); // brake
+        targets[2] = Double.parseDouble(parts[n - 2].trim()); // steering
+        targets[3] = Double.parseDouble(parts[n - 1].trim()); // gear
+
     }
 
 
@@ -37,7 +39,7 @@ public class Sample {
     // costruttore che prende in ingresso solo le feature, usato quando ricevo gli input
       public Sample(double[] features) {
         this.features = features;
-        this.targets = new double[3];
+        this.targets = new double[4];
     }
 
 
