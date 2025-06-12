@@ -8,8 +8,8 @@ import scr.Controller;
 public class ManualDriver extends Controller {
 
     // Dichiarazione variabili di stato
-    private boolean accel = false, brake = false, left = false, right = false, recording = false;
-    private boolean reverse = false;
+    private boolean accel = false, brake = false, left = false, right = false, recording = false, manual = false,
+            automatic = true;
     private int gear = 0;
     private float currentAccel = 0f, currentBrake = 0f, steering = 0f, clutch = 0f;
     private long lastSaveTime = 0;
@@ -47,7 +47,14 @@ public class ManualDriver extends Controller {
                     case KeyEvent.VK_S -> brake = true;
                     case KeyEvent.VK_A -> left = true;
                     case KeyEvent.VK_D -> right = true;
-                    case KeyEvent.VK_R -> reverse = !reverse; // retromarcia
+                    case KeyEvent.VK_UP -> {
+                        automatic = true;
+                        manual = false;
+                    }
+                    case KeyEvent.VK_DOWN -> {
+                        manual = true;
+                        automatic = false;
+                    }
                     /*
                      * case KeyEvent.VK_UP -> {
                      * if (gear < 6)
@@ -67,7 +74,6 @@ public class ManualDriver extends Controller {
                         recording = false;
                         System.out.println("Scrittura disattivata");
                     }
-
                 }
             }
 
@@ -77,7 +83,6 @@ public class ManualDriver extends Controller {
                     case KeyEvent.VK_S -> brake = false;
                     case KeyEvent.VK_A -> left = false;
                     case KeyEvent.VK_D -> right = false;
-                    case KeyEvent.VK_R -> reverse = false;
                 }
             }
         });
@@ -95,6 +100,7 @@ public class ManualDriver extends Controller {
         double speedY = sensors.getLateralSpeed();
         action.steering = steering;
         action.gear = getGear(sensors);
+        double distance = sensors.getDistanceFromStartLine();
 
         action.clutch = clutching(sensors, clutch);
 
@@ -109,29 +115,60 @@ public class ManualDriver extends Controller {
                     boolean fileIsEmpty = file.length() == 0;
 
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
+
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "DistFromStart,TrackLeft, TrackCenterLeft, TrackCenter, TrackCenterRight, TrackRight,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering \n");
-
+                                    "Distanza," +
+                                            "Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,"
+                                            +
+                                            "TrackPosition,AngleToTrackAxis,Speed,SpeedY,Damage," +
+                                            "DistanceRaced,RPM," + "Gear" +
+                                            "Focus1,Focus2,Focus3," +
+                                            "Accelerate,Brake,Steering\n");
                         }
+
                         double[] trackSensors = sensors.getTrackEdgeSensors();
+                        double[] focusSensors = sensors.getFocusSensors();
 
-                        bw.write(
+                        double damage = sensors.getDamage();
+                        double distanceRaced = sensors.getDistanceRaced();
+                        double rpm = sensors.getRPM();
+                        int gear = sensors.getGear();
 
-                                sensors.getDistanceFromStartLine() + "," +
-                                        trackSensors[5] + "," +
-                                        trackSensors[7] + "," +
-                                        trackSensors[9] + "," +
-                                        trackSensors[11] + "," +
-                                        trackSensors[13] + "," +
-                                        sensors.getTrackPosition() + "," +
-                                        sensors.getAngleToTrackAxis() + "," +
-                                        sensors.getRPM() + "," +
-                                        speed + "," +
-                                        speedY + "," +
-                                        action.accelerate + "," +
-                                        action.brake + "," +
-                                        action.steering + "\n");
+                        // Sicurezza
+                        if (trackSensors.length < 17 || focusSensors.length < 5) {
+                            System.err.println("Errore: array sensori non sufficienti!");
+                            return action;
+                        }
+
+                        // Scrittura dati
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(distance).append(",");
+
+                        // TrackEdgeSensors 3–16
+                        for (int i = 3; i <= 16; i++) {
+                            sb.append(trackSensors[i]).append(",");
+                        }
+
+                        sb.append(sensors.getTrackPosition()).append(",");
+                        sb.append(sensors.getAngleToTrackAxis()).append(",");
+                        sb.append(speed).append(",");
+                        sb.append(speedY).append(",");
+                        sb.append(damage).append(",");
+                        sb.append(distanceRaced).append(",");
+                        sb.append(rpm).append(",");
+                        sb.append(gear).append(",");
+
+                        // FocusSensors 0–4
+                        for (int i = 1; i <= 3; i++) {
+                            sb.append(focusSensors[i]).append(",");
+                        }
+
+                        sb.append(action.accelerate).append(",");
+                        sb.append(action.brake).append(",");
+                        sb.append(action.steering).append("\n");
+
+                        bw.write(sb.toString());
                     }
 
                 } catch (IOException e) {
@@ -183,33 +220,33 @@ public class ManualDriver extends Controller {
     private int getGear(SensorModel sensors) {
         int gear = sensors.getGear();
         double rpm = sensors.getRPM();
-        double speed = sensors.getSpeed();
 
-        // Se l'utente vuole la retromarcia e la velocità è bassa, forza retromarcia
-        if (reverse && speed < 0.5) {
-            return -1;
-        }
-
-        // Se siamo in retromarcia e l'utente non vuole più retromarcia, cambia in prima
-        if (!reverse && gear == -1) {
-            return 1;
-        }
         // Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
-        if (gear < 1)
-            return 1;
+        /*
+         * if (gear < 1)
+         * return 1;
+         */
 
-        // Se il valore di RPM dell'auto è maggiore di quello suggerito
-        // sale di marcia rispetto a quella attuale
-        if (gear < 6 && rpm >= gearUp[gear - 1])
-            return gear + 1;
-        else
+        if (manual)
+            return -1;
+        if (automatic) {
+            if (gear < 1)
+                return 1;
+            // Se il valore di RPM dell'auto è maggiore di quello suggerito
+            // sale di marcia rispetto a quella attuale
+            if (gear < 6 && rpm >= gearUp[gear - 1])
+                return gear + 1;
+            else
 
-        // Se il valore di RPM dell'auto è inferiore a quello suggerito
-        // scala la marcia rispetto a quella attuale
-        if (gear > 1 && rpm <= gearDown[gear - 1])
-            return gear - 1;
-        else // Altrimenti mantenere l'attuale
-            return gear;
+            // Se il valore di RPM dell'auto è inferiore a quello suggerito
+            // scala la marcia rispetto a quella attuale
+            if (gear > 1 && rpm <= gearDown[gear - 1])
+                return gear - 1;
+            else // Altrimenti mantenere l'attuale
+                return gear;
+        }
+        return 1;
+
     }
 
     @Override
@@ -227,6 +264,7 @@ public class ManualDriver extends Controller {
         return super.initAngles();
     }
 
+    // funzione aggiunta da Giuliano
     private void updateState() {
         // --- Accelerazione e frenata ---
 
