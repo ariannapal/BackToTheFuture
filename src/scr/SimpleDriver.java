@@ -203,21 +203,6 @@ public class SimpleDriver extends Controller {
     // Ottieni la predizione dal KNN (accel, brake, steering)
     double[] prediction = classifier.predict(currentSample);
 
-		// Aggiungi qui l’euristica correttiva
-		boolean isAlmostStopped = sensors.getSpeed() < 1.0;
-		boolean isCentered = Math.abs(sensors.getTrackPosition()) < 0.15;
-		boolean isLowRPM = sensors.getRPM() < 2000;
-		boolean isCurvatureMinimal = mediaCurvatura(sensors) < 0.05;
-
-		// Aggiungi anche che l’auto non sta frenando
-		boolean noBraking = prediction[1] < 0.1;
-
-		if (isAlmostStopped && isCentered && isCurvatureMinimal && isLowRPM && noBraking) {
-			prediction[0] = 0.0;
-		}
-
-		// FINE AGGIUNTE
-
 		// Costruisci l'azione
 		Action action = new Action();
 		action.accelerate = (float) prediction[0];
