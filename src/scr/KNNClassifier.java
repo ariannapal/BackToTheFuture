@@ -139,18 +139,29 @@ public class KNNClassifier {
         testPoint.features = normalizedFeatures;
 
         List<Sample> neighbors = findKNearest(testPoint);
-        double[] result = new double[4];
+        double[] result = new double[4]; // accelerazione, frenata, sterzata, marcia
 
-        // Media semplice dei target
+        // Media semplice dei target per i primi 3
         for (Sample s : neighbors) {
-            for (int i = 0; i < result.length; i++) {
+            for (int i = 0; i < (result.length - 1); i++) {
                 result[i] += s.targets[i];
             }
         }
 
-        for (int i = 0; i < result.length; i++) {
+        for (int i = 0; i < (result.length - 1); i++) {
             result[i] /= neighbors.size();
         }
+        // per gear, prendo il valore medio (mediana)
+        List<Integer> gears = new ArrayList<>();
+        for (Sample s : neighbors) { // per ogni sample vicino
+            gears.add((int) s.targets[s.targets.length - 1]); // estraggo il gear come valore intero
+        }
+        gears.sort(null); // ordino i gear
+        // Prendo il valore mediano
+        // Se il numero di gear è dispari, prendo il valore centrale
+        // Se è pari, prendo il valore più vicino al centro
+        int medianIndex = (gears.size() - 1) / 2;
+        result[result.length - 1] = gears.get(medianIndex); // attribuisco il valore mediano al risultato
 
         // Logga la predizione
         logPrediction(allFeatures, normalizedFeatures, result);

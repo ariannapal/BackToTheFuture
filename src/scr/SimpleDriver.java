@@ -204,55 +204,6 @@ public class SimpleDriver extends Controller {
 		// Ottieni la predizione dal KNN (accel, brake, steering)
 		double[] prediction = classifier.predict(currentSample);
 
-		// Aggiungi qui l’euristica correttiva
-		boolean isAlmostStopped = sensors.getSpeed() < 1.0;
-		boolean isCentered = Math.abs(sensors.getTrackPosition()) < 0.15;
-		boolean isLowRPM = sensors.getRPM() < 2000;
-		boolean isCurvatureMinimal = mediaCurvatura(sensors) < 0.05;
-
-		// Aggiungi anche che l’auto non sta frenando
-		boolean noBraking = prediction[1] < 0.1;
-
-		// Aggiungi una condizione per evitare sterzate eccessive in rettilineo
-		// e a bassa velocità
-		// Se la pista è quasi rettilinea e la velocità è bassa, annulla la sterzata
-		// mediaCurvatura(sensors) restituisce un valore tra 0 e 1, quindi una soglia
-		// di 0.05 indica una pista quasi rettilinea
-		// e la velocità è bassa (sotto 2 m/s)
-		// (circa 7.2 km/h)
-		boolean isStraightTrack = mediaCurvatura(sensors) < 0.05;
-		boolean isLowSpeed = sensors.getSpeed() < 2.0;
-
-		// Aggiungi una condizione per evitare sterzate eccessive in rettilineo
-		if (isStraightTrack && isLowSpeed) {
-			prediction[2] = 0.0; // annulla la sterzata in eccesso
-		}
-
-		if (isAlmostStopped && isCentered && isCurvatureMinimal && isLowRPM && noBraking) {
-			prediction[0] = 0.0;
-		}
-
-		// FINE AGGIUNTE
-
-		// CODICE PER MEMORIZZARE LE STERZATE
-		try (PrintWriter writer = new PrintWriter(new FileWriter("sterzate_guida.csv", true))) {
-			if (!logHeaderWritten) {
-				writer.println("pred_steer,angleToTrackAxis,trackPosition,speed");
-				logHeaderWritten = true;
-			}
-
-			double predSteer = prediction[2];
-			double angle = sensors.getAngleToTrackAxis();
-			double trackPos = sensors.getTrackPosition();
-			double speed = sensors.getSpeed();
-
-			writer.printf(Locale.US, "%.4f,%.4f,%.4f,%.4f\n",
-					predSteer, angle, trackPos, speed);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		// Costruisci l'azione
 		Action action = new Action();
 		action.accelerate = (float) prediction[0];
