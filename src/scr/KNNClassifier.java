@@ -68,12 +68,9 @@ public class KNNClassifier {
 
     public double[] predict(Sample testPoint) {
         double[] allFeatures = testPoint.features;
-        System.err.println("DEBUG prima di normalizeFeatures: features.length = " + testPoint.features.length);
-for (int i = 0; i < testPoint.features.length; i++) {
-    System.err.println("features[" + i + "] = " + testPoint.features[i]);
-}
-        //double[] normalized = normalizer.normalizeFeatures(testPoint.features.clone());
-        //testPoint.features = normalized;
+
+        double[] normalized = normalizer.normalizeFeatures(testPoint.features.clone());
+        testPoint.features = normalized;
 
         List<Sample> neighbors = findKNearest(testPoint);
 
@@ -105,7 +102,7 @@ for (int i = 0; i < testPoint.features.length; i++) {
         double[] denormResult = normalizer.denormalizeTargets(result);
 
         // Logga sia normalizzati che denormalizzati
-        //logPrediction(allFeatures, normalized, result, denormResult);
+        logPrediction(allFeatures, normalized, result, denormResult);
 
         return denormResult;
 

@@ -92,25 +92,31 @@ public class Normalizer {
 
     // Normalizza un singolo campione per le feature
     public double[] normalizeFeatures(double[] features) {
-    if (features.length != featureNames.length) {
-        System.out.println("DEBUG features.length = " + features.length);
-        System.out.println("DEBUG featureNames.length = " + featureNames.length);
-        for (int i = 0; i < features.length; i++) {
-            System.out.println("features[" + i + "] = " + features[i]);
+        if (features.length != featureNames.length) {
+            System.out.println("DEBUG: features.length = " + features.length);
+            System.out.println("DEBUG: featureNames.length = " + featureNames.length);
+
+            // Stampa ogni elemento di features
+            for (int i = 0; i < features.length; i++) {
+                System.out.println("features[" + i + "] = " + features[i]);
+            }
+
+            // Stampa ogni nome di feature per capire dove si verifica la differenza
+            for (int i = 0; i < featureNames.length; i++) {
+                System.out.println("featureNames[" + i + "] = " + featureNames[i]);
+            }
+
+            throw new IllegalArgumentException("Mismatch: features.length = " +
+                    features.length + " ma featureNames.length = " + featureNames.length);
         }
-        throw new IllegalArgumentException("Mismatch: features.length = " +
-            features.length + " ma featureNames.length = " + featureNames.length);
+
+        double[] normalized = new double[features.length];
+        for (int i = 0; i < features.length; i++) {
+            // Usando il nome della feature per la normalizzazione
+            normalized[i] = normalizeFeature(featureNames[i], features[i]);
+        }
+        return normalized;
     }
-
-    double[] normalized = new double[features.length];
-    for (int i = 0; i < features.length; i++) {
-        // Usando il nome della feature per la normalizzazione
-        normalized[i] = normalizeFeature(featureNames[i], features[i]);
-    }
-    return normalized;
-}
-
-
 
     // Normalizza i target con valori fissi
     public double[] normalizeTargets(double[] targets) {
