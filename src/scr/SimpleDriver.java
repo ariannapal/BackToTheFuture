@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset0489101418.csv", 31);
+		classifier = new KNNClassifier("dataset0489101418_10ms.csv", 31);
 	}
 
 	public void reset() {
@@ -186,7 +186,7 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[12]; // basato su CSV manual driver (24 features)
+		double[] features = new double[11]; // basato su CSV manual driver (24 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
@@ -212,9 +212,9 @@ public class SimpleDriver extends Controller {
 		features[6] = trackSensors[18];
 		features[7] = sensors.getTrackPosition();
 		features[8] = sensors.getAngleToTrackAxis();
-		features[9] = sensors.getRPM();
-		features[10] = sensors.getSpeed();
-		features[11] = sensors.getLateralSpeed();
+		//features[9] = sensors.getRPM();
+		features[9] = sensors.getSpeed();
+		features[10] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[4]);
 
