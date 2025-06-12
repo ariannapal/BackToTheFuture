@@ -40,7 +40,7 @@ public class ManualDriver extends Controller {
                     case 'a' -> left = pressed;
                     case 'd' -> right = pressed;
 
-                    case 'u' -> {
+                    case 'e' -> {
                         if (pressed) {
                             automatic = true;
                             manual = false;
@@ -48,7 +48,7 @@ public class ManualDriver extends Controller {
                         }
                     }
 
-                    case 'm' -> {
+                    case 'r' -> {
                         if (pressed) {
                             manual = true;
                             automatic = false;
@@ -84,7 +84,7 @@ public class ManualDriver extends Controller {
     public Action control(SensorModel sensors) {
         Action action = new Action();
 
-        updateState();
+        updateState(sensors);
 
         action.accelerate = currentAccel;
         action.brake = currentBrake;
@@ -199,7 +199,7 @@ public class ManualDriver extends Controller {
         return super.initAngles();
     }
 
-    private void updateState() {
+    private void updateState(SensorModel sensor) {
         // Gestione acceleratore
         if (accel && !brake) {
             currentAccel = 1f;
@@ -212,14 +212,16 @@ public class ManualDriver extends Controller {
             currentAccel = 0f;
             currentBrake = 0f;
         }
+
         // Gestione sterzo
         if (left) {
-            steering = 0.3f;
+            steering = (sensor.getSpeed() < 40) ? 0.6f : 0.3f;
         } else if (right) {
-            steering = -0.3f;
+            steering = (sensor.getSpeed() < 40) ? -0.6f : -0.3f;
         } else {
             steering = 0f;
         }
+
     }
 
 }
