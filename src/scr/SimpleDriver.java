@@ -1,7 +1,12 @@
 package scr;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.List;
+
 public class SimpleDriver extends Controller {
 
+	private KNNClassifier classifier;
 	/* Costanti di cambio marcia */
 	final int[] gearUp = { 5000, 6000, 6000, 6500, 7000, 0 };
 	final int[] gearDown = { 0, 2500, 3000, 3000, 3500, 3500 };
@@ -37,12 +42,14 @@ public class SimpleDriver extends Controller {
 	final float clutchMaxModifier = (float) 1.3;
 	final float clutchMaxTime = (float) 1.5;
 
-
-
 	private int stuck = 0;
 
 	// current clutch
 	private float clutch = 0;
+
+	public SimpleDriver() {
+		 classifier = new KNNClassifier("dataset.csv", 25);
+	}
 
 	public void reset() {
 		System.out.println("Restarting the race!");
@@ -138,95 +145,68 @@ public class SimpleDriver extends Controller {
 			return (float) 0.3;
 	}
 
-	public Action control(SensorModel sensors) {
-		// Controlla se l'auto è attualmente bloccata
-		/**
-			Se l'auto ha un angolo, rispetto alla traccia, superiore a 30°
-			incrementa "stuck" che è una variabile che indica per quanti cicli l'auto è in
-			condizione di difficoltà.
-			Quando l'angolo si riduce, "stuck" viene riportata a 0 per indicare che l'auto è
-			uscita dalla situaizone di difficoltà
-		 **/
-		if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
-			// update stuck counter
-			stuck++;
-		} else {
-			// if not stuck reset stuck counter
-			stuck = 0;
-		}
 
-		// Applicare la polizza di recupero o meno in base al tempo trascorso
-		/**
-		Se "stuck" è superiore a 25 (stuckTime) allora procedi a entrare in situaizone di RECOVERY
-		per far fronte alla situazione di difficoltà
-		 **/
+public Action control(SensorModel sensors) {
+    // Gestione recupero in caso di auto bloccata
+    if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
+        stuck++;
+    } else {
+        stuck = 0;
+    }
 
-		if (stuck > stuckTime) { //Auto Bloccata
-			/**
-			 * Impostare la marcia e il comando di sterzata supponendo che l'auto stia puntando
-			 * in una direzione al di fuori di pista
-			 **/
+    if (stuck > stuckTime) {
+        // Recovery logic: retromarcia e sterzo per uscire dalla situazione di difficoltà
+        float steer = (float) (-sensors.getAngleToTrackAxis() / steerLock);
+        int gear = -1;
+        if (sensors.getAngleToTrackAxis() * sensors.getTrackPosition() > 0) {
+            gear = 1;
+            steer = -steer;
+        }
+        clutch = clutching(sensors, clutch);
+        Action action = new Action();
+        action.gear = gear;
+        action.steering = steer;
+        action.accelerate = 1.0f;
+        action.brake = 0f;
+        action.clutch = clutch;
+        return action;
+    }
 
-			// Per portare la macchina parallela all'asse TrackPos
-			float steer = (float) (-sensors.getAngleToTrackAxis() / steerLock);
-			int gear = -1; // Retromarcia
+    // Costruisci il vettore features come nel manual driver
+    double[] features = new double[11]; // basato su CSV manual driver (11 features)
+    double[] trackSensors = sensors.getTrackEdgeSensors();
 
-			// Se l'auto è orientata nella direzione corretta invertire la marcia e sterzare
-			if (sensors.getAngleToTrackAxis() * sensors.getTrackPosition() > 0) {
-				gear = 1;
-				steer = -steer;
-			}
-			clutch = clutching(sensors, clutch);
-			// Costruire una variabile CarControl e restituirla
-			Action action = new Action();
-			action.gear = gear;
-			action.steering = steer;
-			action.accelerate = 1.0;
-			action.brake = 0;
-			action.clutch = clutch;
-			return action;
-		}
+    // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
+    features[0] = sensors.getDistanceFromStartLine();
+    features[1] = trackSensors[5];
+    features[2] = trackSensors[7];
+    features[3] = trackSensors[9];
+    features[4] = trackSensors[11];
+    features[5] = trackSensors[13];
+    features[6] = sensors.getTrackPosition();
+    features[7] = sensors.getAngleToTrackAxis();
+    features[8] = sensors.getRPM();
+    features[9] = sensors.getSpeed();
+    features[10] = sensors.getLateralSpeed();
 
-		else //Auto non Bloccata
-		{
-			// Calcolo del comando di accelerazione/frenata
-			float accel_and_brake = getAccel(sensors);
+    Sample currentSample = new Sample(features, new double[3]);
 
-			// Calcolare marcia da utilizzare
-			int gear = getGear(sensors);
+    // Ottieni la predizione dal KNN (accel, brake, steering)
+    double[] prediction = classifier.predict(currentSample);
 
-			// Calcolo angolo di sterzata
-			float steer = getSteer(sensors);
+    // Costruisci l'azione
+    Action action = new Action();
+    action.accelerate = (float) prediction[0];
+    action.brake = (float) prediction[1];
+    action.steering = (float) prediction[2];
+    action.gear = getGear(sensors);
+    action.clutch = clutching(sensors, clutch);
 
-			// Normalizzare lo sterzo
-			if (steer < -1)
-				steer = -1;
-			if (steer > 1)
-				steer = 1;
 
-			// Impostare accelerazione e frenata dal comando congiunto accelerazione/freno
-			float accel, brake;
-			if (accel_and_brake > 0) {
-				accel = accel_and_brake;
-				brake = 0;
-			} else {
-				accel = 0;
 
-				// Applicare l'ABS al freno
-				brake = filterABS(sensors, -accel_and_brake);
-			}
-			clutch = clutching(sensors, clutch);
+    return action;
+}
 
-			// Costruire una variabile CarControl e restituirla
-			Action action = new Action();
-			action.gear = gear;
-			action.steering = steer;
-			action.accelerate = accel;
-			action.brake = brake;
-			action.clutch = clutch;
-			return action;
-		}
-	}
 
 	private float filterABS(SensorModel sensors, float brake) {
 		// Converte la velocità in m/s

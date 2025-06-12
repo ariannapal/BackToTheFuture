@@ -1,9 +1,8 @@
-
 package scr;
 
 public class Sample {
-    public double[] features;         // Input dai sensori
-    public double[] targets;          // Output: accelerate, brake, steering
+    public double[] features;  // Input dai sensori
+    public double[] targets;   // Output: accelerate, brake, steering
 
     // Costruttore da CSV: assume che le ultime 3 colonne siano gli output
     public Sample(String line) {
@@ -22,7 +21,13 @@ public class Sample {
         targets[2] = Double.parseDouble(parts[n - 1].trim()); // steering
     }
 
-    // Calcolo distanza euclidea tra feature
+    // Costruttore da array di features e array di target
+    public Sample(double[] features, double[] targets) {
+        this.features = features;
+        this.targets = targets;
+    }
+
+    // Calcolo distanza euclidea tra le features di due sample
     public double distance(Sample other) {
         double sum = 0;
         for (int i = 0; i < this.features.length; i++) {
