@@ -17,9 +17,12 @@ public class KNNClassifier {
     // Flag per sapere se ho scritto intestazione su log
     private boolean logHeaderWritten = false;
 
-    public KNNClassifier(String filename, int k) {
+    private int[] selectedFeatureIndices;
+
+    public KNNClassifier(String filename, int k,int[] selectedFeatureIndices) {
         this.trainingData = new ArrayList<>();
         this.k = k;
+           this.selectedFeatureIndices = selectedFeatureIndices;
 
         List<Sample> rawSamples = readRawSamples(filename);
 
@@ -116,29 +119,31 @@ public class KNNClassifier {
         return kdtree.kNearestNeighbors(testPoint, k);
     }
 
-    public double[] predict(Sample testPoint) {
-        double[] originalFeatures = testPoint.features.clone();  // copia dati originali
-        double[] normalizedFeatures = normalizeFeatures(originalFeatures);
-        testPoint.features = normalizedFeatures;
+   public double[] predict(Sample testPoint) {
+    double[] allFeatures = testPoint.features;
+    double[] selected = testPoint.getSelectedFeatures(selectedFeatureIndices);
+    double[] normalizedSelected = normalizeFeatures(selected);
 
-        List<Sample> neighbors = findKNearest(testPoint);
-        double[] result = new double[3];
+    // Ricrea un Sample con solo le feature normalizzate usate per il KNN
+    Sample reducedSample = new Sample(normalizedSelected, testPoint.targets);
 
-        for (Sample s : neighbors) {
-            result[0] += s.targets[0];
-            result[1] += s.targets[1];
-            result[2] += s.targets[2];
-        }
+    List<Sample> neighbors = findKNearest(reducedSample);
 
-        for (int i = 0; i < result.length; i++) {
-            result[i] /= k;
-        }
-
-        // Loggo la predizione con dati input e normalizzati
-        logPrediction(originalFeatures, normalizedFeatures, result);
-
-        return result;
+    double[] result = new double[3];
+    for (Sample s : neighbors) {
+        result[0] += s.targets[0];
+        result[1] += s.targets[1];
+        result[2] += s.targets[2];
     }
+    for (int i = 0; i < result.length; i++) {
+        result[i] /= k;
+    }
+
+    // Logga la predizione
+    logPrediction(allFeatures, normalizedSelected, result);
+
+    return result;
+}
 
     private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures, double[] prediction) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {

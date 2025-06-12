@@ -41,4 +41,12 @@ public class Sample {
         }
         return Math.sqrt(sum);
     }
+
+      public double[] getSelectedFeatures(int[] selectedIndices) {
+        double[] selected = new double[selectedIndices.length];
+        for (int i = 0; i < selectedIndices.length; i++) {
+            selected[i] = features[selectedIndices[i]];
+        }
+        return selected;
+    }
 }
