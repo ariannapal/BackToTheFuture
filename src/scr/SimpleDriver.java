@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset.csv", 91);
+		classifier = new KNNClassifier("dataset.csv", 31);
 	}
 
 	public void reset() {
@@ -216,35 +216,47 @@ public class SimpleDriver extends Controller {
 		action.clutch = clutching(sensors, clutch);
 
 		// Euristiche
-		applyHeuristics(sensors, action);
+		applyHeuristics(sensors, action, (float) prediction[2]);
 
 		return action;
 	}
 
-	private void applyHeuristics(SensorModel sensors, Action action) {
-		// frenata d'emergenza in curva veloce
-		// se KNN ha messo brake = 0, questa euristica corregge in tempo reale solo se
-		// sono in curva veloce
-		if (Math.abs(sensors.getAngleToTrackAxis()) > 0.2 && sensors.getSpeed() > 90) {
-			System.out.println("Frenata aumentata in curva: brake = " + action.brake + " → 0.5");
+	private void applyHeuristics(SensorModel sensors, Action action, float predictedSteering) {
+		boolean inCurve = isCurving(sensors, predictedSteering);
+
+		// Frenata automatica se sei in curva stretta ad alta velocità
+		if (inCurve && sensors.getSpeed() > 90) {
+			System.out.println("In curva veloce, applico frenata");
 			action.brake = Math.max(action.brake, 0.5f);
 		}
 
-		// taglio accelerazione in sterzo forte
-		// riduco accelerazione se lo sterzo è forte evitando il sottosterzo, utile per
-		// le curve strette
-		if (Math.abs(action.steering) > 0.3 && sensors.getSpeed() > 80) {
+		// Taglio accelerazione se curva stretta
+		if (Math.abs(predictedSteering) > 0.3 && sensors.getSpeed() > 80) {
+			System.out.println("Sterzata forte a velocità elevata, riduco accelerazione");
 			action.accelerate *= 0.6f;
 		}
 
-		// recupero posizione se sono troppo fuori pista
+		// Rientro dalla traiettoria se sei troppo fuori
 		if (Math.abs(sensors.getTrackPosition()) > 0.8) {
+			System.out.println("Troppo fuori pista, rientro automatico");
 			action.steering += -Math.signum(sensors.getTrackPosition()) * 0.2f;
 		}
-		// limitatore sterzo ad alta velcita
+
+		// Stabilizzatore sterzo ad alta velocità
 		if (sensors.getSpeed() > 120) {
 			action.steering = Math.max(-0.2f, Math.min(0.2f, action.steering));
 		}
+	}
+
+	private boolean isCurving(SensorModel sensors, float predictedSteering) {
+		double[] t = sensors.getTrackEdgeSensors();
+		float angle = (float) Math.abs(sensors.getAngleToTrackAxis());
+		float steer = Math.abs(predictedSteering);
+		double pos = Math.abs(sensors.getTrackPosition());
+		float curvature = (float) ((t[11] + t[13]) - (t[5] + t[7]));
+		double curveRatio = curvature / (t[9] + 1e-5f);
+
+		return (angle > 0.2 || steer > 0.3 || pos > 0.6 || Math.abs(curveRatio) > 0.2);
 	}
 
 	private float filterABS(SensorModel sensors, float brake) {
