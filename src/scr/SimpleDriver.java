@@ -48,7 +48,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		 classifier = new KNNClassifier("dataset.csv", 11);
+		classifier = new KNNClassifier("dataset.csv", 11);
 	}
 
 	public void reset() {
@@ -83,12 +83,16 @@ public class SimpleDriver extends Controller {
 	}
 
 	private float getSteer(SensorModel sensors) {
-		/** L'angolo di sterzata viene calcolato correggendo l'angolo effettivo della vettura
-		 * rispetto all'asse della pista [sensors.getAngle()] e regolando la posizione della vettura
+		/**
+		 * L'angolo di sterzata viene calcolato correggendo l'angolo effettivo della
+		 * vettura
+		 * rispetto all'asse della pista [sensors.getAngle()] e regolando la posizione
+		 * della vettura
 		 * rispetto al centro della pista [sensors.getTrackPos()*0,5].
 		 */
 		float targetAngle = (float) (sensors.getAngleToTrackAxis() - sensors.getTrackPosition() * 0.5);
-		// ad alta velocità ridurre il comando di sterzata per evitare di perdere il controllo
+		// ad alta velocità ridurre il comando di sterzata per evitare di perdere il
+		// controllo
 		if (sensors.getSpeed() > steerSensitivityOffset)
 			return (float) (targetAngle
 					/ (steerLock * (sensors.getSpeed() - steerSensitivityOffset) * wheelSensitivityCoeff));
@@ -108,7 +112,8 @@ public class SimpleDriver extends Controller {
 
 			float targetSpeed;
 
-			// Se la pista è rettilinea e abbastanza lontana da una curva, quindi va alla massima velocità
+			// Se la pista è rettilinea e abbastanza lontana da una curva, quindi va alla
+			// massima velocità
 			if (sensorsensor > maxSpeedDist || (sensorsensor >= rxSensor && sensorsensor >= sxSensor))
 				targetSpeed = maxSpeed;
 			else {
@@ -136,98 +141,126 @@ public class SimpleDriver extends Controller {
 			}
 
 			/**
-			 * Il comando di accelerazione/frenata viene scalato in modo esponenziale rispetto
+			 * Il comando di accelerazione/frenata viene scalato in modo esponenziale
+			 * rispetto
 			 * alla differenza tra velocità target e quella attuale
 			 */
 			return (float) (2 / (1 + Math.exp(sensors.getSpeed() - targetSpeed)) - 1);
 		} else
-			// Quando si esce dalla carreggiata restituisce un comando di accelerazione moderata
+			// Quando si esce dalla carreggiata restituisce un comando di accelerazione
+			// moderata
 			return (float) 0.3;
 	}
 
+	public Action control(SensorModel sensors) {
+		// Gestione recupero in caso di auto bloccata
+		if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
+			stuck++;
+		} else {
+			stuck = 0;
+		}
 
-public Action control(SensorModel sensors) {
-    // Gestione recupero in caso di auto bloccata
-    if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
-        stuck++;
-    } else {
-        stuck = 0;
-    }
+		if (stuck > stuckTime) {
+			// Recovery logic: retromarcia e sterzo per uscire dalla situazione di
+			// difficoltà
+			float steer = (float) (-sensors.getAngleToTrackAxis() / steerLock);
+			int gear = -1;
+			if (sensors.getAngleToTrackAxis() * sensors.getTrackPosition() > 0) {
+				gear = 1;
+				steer = -steer;
+			}
+			clutch = clutching(sensors, clutch);
+			Action action = new Action();
+			action.gear = gear;
+			action.steering = steer;
+			action.accelerate = 1.0f;
+			action.brake = 0f;
+			action.clutch = clutch;
+			return action;
+		}
 
-    if (stuck > stuckTime) {
-        // Recovery logic: retromarcia e sterzo per uscire dalla situazione di difficoltà
-        float steer = (float) (-sensors.getAngleToTrackAxis() / steerLock);
-        int gear = -1;
-        if (sensors.getAngleToTrackAxis() * sensors.getTrackPosition() > 0) {
-            gear = 1;
-            steer = -steer;
-        }
-        clutch = clutching(sensors, clutch);
-        Action action = new Action();
-        action.gear = gear;
-        action.steering = steer;
-        action.accelerate = 1.0f;
-        action.brake = 0f;
-        action.clutch = clutch;
-        return action;
-    }
+		// Costruisci il vettore features come nel manual driver
+		double[] features = new double[26]; // basato su CSV manual driver (11 features)
+		double[] trackSensors = sensors.getTrackEdgeSensors();
 
-    // Costruisci il vettore features come nel manual driver
-    double[] features = new double[26]; // basato su CSV manual driver (11 features)
-    double[] trackSensors = sensors.getTrackEdgeSensors();
+		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
+		// + speed + speedY)
+		features[0] = sensors.getDistanceFromStartLine();
+		features[1] = trackSensors[3];
+		features[2] = trackSensors[4];
+		features[3] = trackSensors[5];
+		features[4] = trackSensors[6];
+		features[5] = trackSensors[7];
+		features[6] = trackSensors[8];
+		features[7] = trackSensors[9];
+		features[8] = trackSensors[10];
+		features[9] = trackSensors[11];
+		features[10] = trackSensors[12];
+		features[11] = trackSensors[13];
+		features[12] = trackSensors[14];
+		features[13] = trackSensors[15];
+		features[14] = trackSensors[16];
+		features[15] = sensors.getTrackPosition();
+		features[16] = sensors.getAngleToTrackAxis();
+		features[17] = sensors.getSpeed();
+		features[18] = sensors.getLateralSpeed();
+		features[19] = sensors.getDamage();
+		features[20] = sensors.getDistanceRaced();
+		features[21] = sensors.getRPM();
+		features[22] = sensors.getGear();
+		features[23] = sensors.getFocusSensors()[1];
+		features[24] = sensors.getFocusSensors()[2];
+		features[25] = sensors.getFocusSensors()[3];
 
-    // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
-    features[0] = sensors.getDistanceFromStartLine();
-    features[1] = trackSensors[3];
-    features[2] = trackSensors[4];
-    features[3] = trackSensors[5];
-    features[4] = trackSensors[6];
-    features[5] = trackSensors[7];
-	features[6] = trackSensors[8];
-    features[7] = trackSensors[9];
-    features[8] = trackSensors[10];
-	features[9] = trackSensors[11];
-	features[10] = trackSensors[12];
-    features[11] = trackSensors[13];
-    features[12] = trackSensors[14];
-	features[13] = trackSensors[15];
-    features[14] = trackSensors[16];
-	features[15] = sensors.getTrackPosition();
-    features[16] = sensors.getAngleToTrackAxis();
-    features[17] = sensors.getSpeed();
-    features[18] = sensors.getLateralSpeed();
-	features[19] = sensors.getDamage();
-	features[20] = sensors.getDistanceRaced();
-	features[21] = sensors.getRPM();
-	features[22] = sensors.getGear();
-	features[23] = sensors.getFocusSensors()[1];
-	features[24] = sensors.getFocusSensors()[2];
-	features[25] = sensors.getFocusSensors()[3];
+		Sample currentSample = new Sample(features, new double[3]);
 
+		// Ottieni la predizione dal KNN (accel, brake, steering)
+		double[] prediction = classifier.predict(currentSample);
 
-    Sample currentSample = new Sample(features, new double[3]);
+		// ✅ ⚠️ Aggiungi qui l’euristica correttiva
+		boolean isAlmostStopped = sensors.getSpeed() < 1.0;
+		boolean isCentered = Math.abs(sensors.getTrackPosition()) < 0.15;
+		boolean isLowRPM = sensors.getRPM() < 2000;
+		boolean isCurvatureMinimal = mediaCurvatura(sensors) < 0.05;
 
-    // Ottieni la predizione dal KNN (accel, brake, steering)
-    double[] prediction = classifier.predict(currentSample);
+		// Aggiungi anche che l’auto non sta frenando
+		boolean noBraking = prediction[1] < 0.1;
 
-    // Costruisci l'azione
-    Action action = new Action();
-    action.accelerate = (float) prediction[0];
-    action.brake = (float) prediction[1];
-    action.steering = (float) prediction[2];
-    action.gear = getGear(sensors);
-    action.clutch = clutching(sensors, clutch);
+		if (isAlmostStopped && isCentered && isCurvatureMinimal && isLowRPM && noBraking) {
+			prediction[0] = 0.0;
+		}
 
+		// FINE AGGIUNTE
 
+		// Costruisci l'azione
+		Action action = new Action();
+		action.accelerate = (float) prediction[0];
+		action.brake = (float) prediction[1];
+		action.steering = (float) prediction[2];
+		action.gear = getGear(sensors);
+		action.clutch = clutching(sensors, clutch);
 
-    return action;
-}
+		return action;
+	}
+
+	// Calcola la media della curvatura della pista
+	// utilizzando i sensori della pista
+	private double mediaCurvatura(SensorModel sensors) {
+		double[] track = sensors.getTrackEdgeSensors();
+		double center = track[9];
+		double sum = 0.0;
+		for (int i = 5; i <= 13; i++) {
+			sum += Math.abs(track[i] - center);
+		}
+		return sum / 9.0;
+	}
 
 	private float filterABS(SensorModel sensors, float brake) {
 		// Converte la velocità in m/s
 		float speed = (float) (sensors.getSpeed() / 3.6);
 
-		// Quando la velocità è inferiore alla velocità minima per l'abs non interviene in caso di frenata
+		// Quando la velocità è inferiore alla velocità minima per l'abs non interviene
+		// in caso di frenata
 		if (speed < absMinSpeed)
 			return brake;
 
@@ -237,7 +270,8 @@ public Action control(SensorModel sensors) {
 			slip += sensors.getWheelSpinVelocity()[i] * wheelRadius[i];
 		}
 
-		// Lo slittamento è la differenza tra la velocità effettiva dell'auto e la velocità media delle ruote
+		// Lo slittamento è la differenza tra la velocità effettiva dell'auto e la
+		// velocità media delle ruote
 		slip = speed - slip / 4.0f;
 
 		// Quando lo slittamento è troppo elevato, si applica l'ABS
@@ -266,7 +300,8 @@ public Action control(SensorModel sensors) {
 			double delta = clutchDelta;
 			if (sensors.getGear() < 2) {
 
-				// Applicare un'uscita più forte della frizione quando la marcia è una e la corsa è appena iniziata.
+				// Applicare un'uscita più forte della frizione quando la marcia è una e la
+				// corsa è appena iniziata.
 				delta /= 2;
 				maxClutch *= clutchMaxModifier;
 				if (sensors.getCurrentLapTime() < clutchMaxTime)

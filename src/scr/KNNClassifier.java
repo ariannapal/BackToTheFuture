@@ -139,15 +139,24 @@ public class KNNClassifier {
 
         List<Sample> neighbors = findKNearest(testPoint);
         double[] result = new double[3];
+        // Aggiunta una media Pesata
+        double totalWeight = 0.0;
 
+        // Calcolo la media pesata delle etichette dei vicini
+        // utilizzando la distanza come peso
+        // per evitare divisione per zero, aggiungo un piccolo valore
         for (Sample s : neighbors) {
-            result[0] += s.targets[0];
-            result[1] += s.targets[1];
-            result[2] += s.targets[2];
+            double dist = testPoint.distance(s);
+            double weight = 1.0 / (dist + 1e-6); // evita divisione per zero
+            totalWeight += weight;
+
+            for (int i = 0; i < 3; i++) {
+                result[i] += weight * s.targets[i];
+            }
         }
 
         for (int i = 0; i < result.length; i++) {
-            result[i] /= k;
+            result[i] /= totalWeight;
         }
 
         // Loggo la predizione con dati input e normalizzati
