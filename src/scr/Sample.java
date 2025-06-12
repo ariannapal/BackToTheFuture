@@ -37,16 +37,16 @@ public class Sample {
         this.targets = new double[4];
     }
 
-    // Calcolo distanza euclidea tra le features di due sample
-    /*
-     * public double distance(Sample other) {
-     * double sum = 0;
-     * for (int i = 0; i < this.features.length; i++) {
-     * sum += Math.pow(this.features[i] - other.features[i], 2);
-     * }
-     * return Math.sqrt(sum);
-     * }
-     */
+    //Calcolo distanza euclidea tra le features di due sample
+    
+      public double distance(Sample other) {
+      double sum = 0;
+      for (int i = 0; i < this.features.length; i++) {
+     sum += Math.pow(this.features[i] - other.features[i], 2);
+      }
+      return Math.sqrt(sum);
+      }
+     /*
     public double distance(Sample other) {
         double sum = 0;
 
@@ -70,6 +70,6 @@ public class Sample {
         }
 
         return Math.sqrt(sum);
-    }
+    }*/
 
 }
