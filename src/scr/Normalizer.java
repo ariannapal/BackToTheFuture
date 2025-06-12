@@ -11,7 +11,7 @@ public class Normalizer {
     private double[] targetMaxs;
 
     // Nome delle feature
-    private static final String[] featureNames = {
+    public static final String[] featureNames = {
             "Track2", "Track5",
             "Track8", "Track9", "Track10", "Track13",
             "Track16", "TrackPosition", "AngleToTrackAxis", "Speed",
@@ -92,13 +92,25 @@ public class Normalizer {
 
     // Normalizza un singolo campione per le feature
     public double[] normalizeFeatures(double[] features) {
-        double[] normalized = new double[features.length];
+    if (features.length != featureNames.length) {
+        System.out.println("DEBUG features.length = " + features.length);
+        System.out.println("DEBUG featureNames.length = " + featureNames.length);
         for (int i = 0; i < features.length; i++) {
-            // Usando il nome della feature per la normalizzazione
-            normalized[i] = normalizeFeature(featureNames[i], features[i]);
+            System.out.println("features[" + i + "] = " + features[i]);
         }
-        return normalized;
+        throw new IllegalArgumentException("Mismatch: features.length = " +
+            features.length + " ma featureNames.length = " + featureNames.length);
     }
+
+    double[] normalized = new double[features.length];
+    for (int i = 0; i < features.length; i++) {
+        // Usando il nome della feature per la normalizzazione
+        normalized[i] = normalizeFeature(featureNames[i], features[i]);
+    }
+    return normalized;
+}
+
+
 
     // Normalizza i target con valori fissi
     public double[] normalizeTargets(double[] targets) {

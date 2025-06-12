@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset0489101418.csv", 31);
+		classifier = new KNNClassifier("dataset2589101316_10ms.csv", 5);
 	}
 
 	public void reset() {
@@ -249,6 +249,8 @@ public class SimpleDriver extends Controller {
 		features[10] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[4]);
+
+	
 
 		// Ottieni la predizione dal KNN (accel, brake, steering)
 		double[] prediction = classifier.predict(currentSample);
