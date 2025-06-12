@@ -194,7 +194,7 @@ public class ManualDriver extends Controller {
         return super.initAngles();
     }
 
-        private void updateState() {
+        private void updateState(SensorModel sensor) {
     // Gestione acceleratore
     if (accel && !brake) {
         currentAccel = 1f;
@@ -211,8 +211,10 @@ public class ManualDriver extends Controller {
 
     // Gestione sterzo
     if (left) {
+        if(sensor.getSpeed()<40) steering +=0.3f; 
         steering = 0.3f;
     } else if (right) {
+        if(sensor.getSpeed()<40) steering -=0.3f; 
         steering = -0.3f;
     } else {
         steering = 0f;
