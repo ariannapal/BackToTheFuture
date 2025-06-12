@@ -7,11 +7,24 @@ public class KNNClassifier {
     private List<Sample> trainingData;
     private KDTree kdtree;
     private int k;
-    private Normalizer normalizer;
     private static final String LOG_FILE = "log_predizioni.csv";
 
     // Flag per sapere se ho scritto intestazione su log
     private boolean logHeaderWritten = false;
+
+    // Definizione delle feature
+    public static final String[] featureNames = {
+            "Track2", "Track5", "Track8", "Track9", "Track10", "Track13", "Track16",
+            "TrackPosition", "AngleToTrackAxis", "Speed", "SpeedY"
+    };
+
+    // Valori massimi per le features (ad esempio 200 per i sensori)
+    private static final double[] featureMaxValues = {
+            200, 200, 200, 200, 200, 200, 200, 1, Math.PI, 300, 100
+    };
+    // Minimi e massimi per i target
+    private double[] targetMins;
+    private double[] targetMaxs;
 
     public KNNClassifier(String filename, int k) {
         this.trainingData = new ArrayList<>();
@@ -22,9 +35,9 @@ public class KNNClassifier {
         if (rawSamples.isEmpty()) {
             throw new RuntimeException("Dataset vuoto!");
         }
-        this.normalizer = new Normalizer();
-        normalizer.computeMinMax(rawSamples);
-        normalizer.normalizeSamples(rawSamples);
+
+        computeTargetMinMax(rawSamples);
+        normalizeSamples(rawSamples);
 
         this.trainingData = rawSamples;
         this.kdtree = new KDTree(trainingData);
@@ -36,9 +49,9 @@ public class KNNClassifier {
     // (utilizzato per testare il classificatore con dati già pronti)
     public KNNClassifier(List<Sample> trainingData, int k) {
         this.k = k;
-        this.normalizer = new Normalizer();
-        this.normalizer.computeMinMax(trainingData);
-        this.normalizer.normalizeSamples(trainingData);
+
+        computeTargetMinMax(trainingData);
+        normalizeSamples(trainingData);
 
         this.trainingData = new ArrayList<>(trainingData);
         this.kdtree = new KDTree(this.trainingData);
@@ -69,7 +82,7 @@ public class KNNClassifier {
     public double[] predict(Sample testPoint) {
         double[] allFeatures = testPoint.features;
 
-        double[] normalized = normalizer.normalizeFeatures(testPoint.features.clone());
+        double[] normalized = normalizeFeatures(testPoint.features.clone());
         testPoint.features = normalized;
 
         List<Sample> neighbors = findKNearest(testPoint);
@@ -99,7 +112,7 @@ public class KNNClassifier {
         int medianIndex = (gears.size() - 1) / 2;
         result[result.length - 1] = gears.get(medianIndex); // attribuisco il valore mediano al risultato
 
-        double[] denormResult = normalizer.denormalizeTargets(result);
+        double[] denormResult = denormalizeTargets(result);
 
         // Logga sia normalizzati che denormalizzati
         logPrediction(allFeatures, normalized, result, denormResult);
@@ -108,6 +121,7 @@ public class KNNClassifier {
 
     }
 
+    // debrah dnsiajifd
     private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
             double[] prediction, double[] denormalized) {
 
@@ -150,4 +164,72 @@ public class KNNClassifier {
             e.printStackTrace();
         }
     }
+
+    // Calcola minimi e massimi per i target
+    private void computeTargetMinMax(List<Sample> samples) {
+        int numTargets = samples.get(0).targets.length;
+
+        targetMins = new double[numTargets];
+        targetMaxs = new double[numTargets];
+
+        Arrays.fill(targetMins, Double.POSITIVE_INFINITY);
+        Arrays.fill(targetMaxs, Double.NEGATIVE_INFINITY);
+
+        for (Sample s : samples) {
+            for (int i = 0; i < numTargets; i++) {
+                double val = s.targets[i];
+                if (val < targetMins[i])
+                    targetMins[i] = val;
+                if (val > targetMaxs[i])
+                    targetMaxs[i] = val;
+            }
+        }
+    }
+
+    // Normalizza un campione (features e targets)
+    // Normalizza tutte le features e i target di ogni campione
+    public void normalizeSamples(List<Sample> samples) {
+        for (Sample s : samples) {
+            s.features = normalizeFeatures(s.features); // Normalizza le features
+            s.targets = normalizeTargets(s.targets); // Normalizza i target
+        }
+    }
+
+    // Normalizza le features (feature / xmax)
+    public double[] normalizeFeatures(double[] features) {
+        if (features.length != featureNames.length) {
+            throw new IllegalArgumentException("Mismatch: features.length = " + features.length
+                    + " ma featureNames.length = " + featureNames.length);
+        }
+
+        double[] normalized = new double[features.length];
+        for (int i = 0; i < features.length; i++) {
+            // Usa il massimo definito per ogni feature
+            normalized[i] = features[i] / featureMaxValues[i]; // Normalizzazione feature / xmax
+        }
+        return normalized;
+    }
+
+    // Normalizza i target
+    public double[] normalizeTargets(double[] targets) {
+        double[] normalized = new double[targets.length];
+        for (int i = 0; i < targets.length; i++) {
+            if (targetMaxs[i] == targetMins[i]) {
+                normalized[i] = 0; // Se min == max, il target è costante
+            } else {
+                normalized[i] = (targets[i] - targetMins[i]) / (targetMaxs[i] - targetMins[i]);
+            }
+        }
+        return normalized;
+    }
+
+    // Denormalizza i target
+    public double[] denormalizeTargets(double[] normalized) {
+        double[] denormalized = new double[normalized.length];
+        for (int i = 0; i < normalized.length; i++) {
+            denormalized[i] = normalized[i] * (targetMaxs[i] - targetMins[i]) + targetMins[i];
+        }
+        return denormalized;
+    }
+
 }
