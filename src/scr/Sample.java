@@ -21,7 +21,7 @@ public class Sample {
         targets[2] = Double.parseDouble(parts[n - 1].trim()); // steering
     }
 
-    // Costruttore da array di features e array di target
+    // Costruttore da array di features e array di target. Serve quando si costruisce il dataset
     public Sample(double[] features, double[] targets) {
         this.features = features;
         this.targets = targets;
