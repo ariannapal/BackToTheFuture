@@ -6,10 +6,6 @@ import java.util.List;
 
 public class SimpleDriver extends Controller {
 
-	int[] selectedIndices = {
-			3, 5, 7, 9, 11, 13, 15, 16, 17, 18, 21, 22
-	};
-
 	private KNNClassifier classifier;
 	/* Costanti di cambio marcia */
 	final int[] gearUp = { 5000, 6000, 6000, 6500, 7000, 0 };
@@ -52,7 +48,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset.csv", 30, selectedIndices);
+		classifier = new KNNClassifier("dataset.csv", 25);
 	}
 
 	public void reset() {
@@ -183,45 +179,31 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		// Costruisci il vettore features come nel manual driver
-		double[] features = new double[26]; // basato su CSV manual driver (11 features)
-		double[] trackSensors = sensors.getTrackEdgeSensors();
+		double[] features = new double[11]; // basato su CSV manual driver (11 features)
+    double[] trackSensors = sensors.getTrackEdgeSensors();
 
-		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
-		// + speed + speedY)
-		// features[0] = sensors.getDistanceFromStartLine();
-		features[1] = trackSensors[3];
-		// features[2] = trackSensors[4];
-		features[3] = trackSensors[5];
-		// features[4] = trackSensors[6];
-		features[5] = trackSensors[7];
-		// features[6] = trackSensors[8];
-		features[7] = trackSensors[9];
-		// features[8] = trackSensors[10];
-		features[9] = trackSensors[11];
-		// features[10] = trackSensors[12];
-		features[11] = trackSensors[13];
-		// features[12] = trackSensors[14];
-		features[13] = trackSensors[15];
-		// features[14] = trackSensors[16];
-		features[15] = sensors.getTrackPosition();
-		features[16] = sensors.getAngleToTrackAxis();
-		features[17] = sensors.getSpeed();
-		features[18] = sensors.getLateralSpeed();
-		// features[19] = sensors.getDamage();
-		// features[20] = sensors.getDistanceRaced();
-		features[21] = sensors.getRPM();
-		features[22] = sensors.getGear();
-		// features[23] = sensors.getFocusSensors()[1];
-		// features[24] = sensors.getFocusSensors()[2];
-		// features[25] = sensors.getFocusSensors()[3];
 
-		Sample currentSample = new Sample(features, new double[3]);
+    // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
+    features[0] = sensors.getDistanceFromStartLine();
+    features[1] = trackSensors[5];
+    features[2] = trackSensors[7];
+    features[3] = trackSensors[9];
+    features[4] = trackSensors[11];
+    features[5] = trackSensors[13];
+    features[6] = sensors.getTrackPosition();
+    features[7] = sensors.getAngleToTrackAxis();
+    features[8] = sensors.getRPM();
+    features[9] = sensors.getSpeed();
+    features[10] = sensors.getLateralSpeed();
 
-		// Ottieni la predizione dal KNN (accel, brake, steering)
-		double[] prediction = classifier.predict(currentSample);
 
-		// ✅ ⚠️ Aggiungi qui l’euristica correttiva
+    Sample currentSample = new Sample(features, new double[3]);
+
+
+    // Ottieni la predizione dal KNN (accel, brake, steering)
+    double[] prediction = classifier.predict(currentSample);
+
+		// Aggiungi qui l’euristica correttiva
 		boolean isAlmostStopped = sensors.getSpeed() < 1.0;
 		boolean isCentered = Math.abs(sensors.getTrackPosition()) < 0.15;
 		boolean isLowRPM = sensors.getRPM() < 2000;

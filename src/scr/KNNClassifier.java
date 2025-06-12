@@ -17,12 +17,9 @@ public class KNNClassifier {
     // Flag per sapere se ho scritto intestazione su log
     private boolean logHeaderWritten = false;
 
-    private int[] selectedFeatureIndices;
-
-    public KNNClassifier(String filename, int k, int[] selectedFeatureIndices) {
+    public KNNClassifier(String filename, int k) {
         this.trainingData = new ArrayList<>();
         this.k = k;
-        this.selectedFeatureIndices = selectedFeatureIndices;
 
         List<Sample> rawSamples = readRawSamples(filename);
 
@@ -164,7 +161,7 @@ public class KNNClassifier {
         }
 
         // Logga la predizione
-        logPrediction(allFeatures, normalizedSelected, result);
+        logPrediction(allFeatures, normalizedFeatures, result);
 
         return result;
     }

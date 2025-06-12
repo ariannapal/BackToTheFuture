@@ -114,67 +114,40 @@ public class ManualDriver extends Controller {
                     boolean fileExists = file.exists();
                     boolean fileIsEmpty = file.length() == 0;
 
-                    try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
 
+                    try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "Distanza," +
-                                            "Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,"
-                                            +
-                                            "TrackPosition,AngleToTrackAxis,Speed,SpeedY,Damage," +
-                                            "DistanceRaced,RPM," + "Gear," +
-                                            "Focus1,Focus2,Focus3," +
-                                            "Accelerate,Brake,Steering\n");
-                        }
+                                    "DistFromStart,TrackLeft, TrackCenterLeft, TrackCenter, TrackCenterRight, TrackRight,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering \n");
 
+
+                        }
                         double[] trackSensors = sensors.getTrackEdgeSensors();
-                        double[] focusSensors = sensors.getFocusSensors();
 
-                        double damage = sensors.getDamage();
-                        double distanceRaced = sensors.getDistanceRaced();
-                        double rpm = sensors.getRPM();
-                        int gear = sensors.getGear();
 
-                        // Sicurezza
-                        if (trackSensors.length < 17 || focusSensors.length < 5) {
-                            System.err.println("Errore: array sensori non sufficienti!");
-                            return action;
-                        }
-
-                        // Scrittura dati
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(distance).append(",");
-
-                        // TrackEdgeSensors 3–16
-                        for (int i = 3; i <= 16; i++) {
-                            sb.append(trackSensors[i]).append(",");
-                        }
-
-                        sb.append(sensors.getTrackPosition()).append(",");
-                        sb.append(sensors.getAngleToTrackAxis()).append(",");
-                        sb.append(speed).append(",");
-                        sb.append(speedY).append(",");
-                        sb.append(damage).append(",");
-                        sb.append(distanceRaced).append(",");
-                        sb.append(rpm).append(",");
-                        sb.append(gear).append(",");
-
-                        // FocusSensors 0–4
-                        for (int i = 1; i <= 3; i++) {
-                            sb.append(focusSensors[i]).append(",");
-                        }
-
-                        sb.append(action.accelerate).append(",");
-                        sb.append(action.brake).append(",");
-                        sb.append(action.steering).append("\n");
-
-                        bw.write(sb.toString());
+                        bw.write(
+                               distance + "," +
+                                trackSensors[5] + "," +
+                                        trackSensors[7] + "," +
+                                        trackSensors[9] + "," +
+                                        trackSensors[11] + "," +
+                                        trackSensors[13] + "," +
+                                        sensors.getTrackPosition() + "," +
+                                        sensors.getAngleToTrackAxis() + "," +
+                                        sensors.getRPM() + "," +
+                                        speed + "," +
+                                        speedY + "," +
+                                        action.accelerate + "," +
+                                        action.brake + "," +
+                                        action.steering + "\n");
                     }
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+
 
         }
         return action;
