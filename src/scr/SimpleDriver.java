@@ -8,10 +8,11 @@ import java.util.List;
 import java.util.Locale;
 
 public class SimpleDriver extends Controller {
-	private static boolean logHeaderWritten = false;
 
 	private KNNClassifier classifier;
 	/* Costanti di cambio marcia */
+	private long lastGearChange = 0;
+	private static final long MIN_GEAR_INTERVAL_MS = 1500; // 1,5 secondo tra i cambi di marcia
 	final int[] gearUp = { 5000, 6000, 6000, 6500, 7000, 0 };
 	final int[] gearDown = { 0, 2500, 3000, 3000, 3500, 3500 };
 
@@ -65,25 +66,27 @@ public class SimpleDriver extends Controller {
 	}
 
 	private int getGear(SensorModel sensors) {
-		int gear = sensors.getGear();
+		long now = System.currentTimeMillis();
+		int currentGear = sensors.getGear();
 		double rpm = sensors.getRPM();
 
-		// Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
-		if (gear < 1)
+		if (currentGear < 1)
 			return 1;
 
-		// Se il valore di RPM dell'auto è maggiore di quello suggerito
-		// sale di marcia rispetto a quella attuale
-		if (gear < 6 && rpm >= gearUp[gear - 1])
-			return gear + 1;
-		else
+		if (now - lastGearChange < MIN_GEAR_INTERVAL_MS)
+			return currentGear;
 
-		// Se il valore di RPM dell'auto è inferiore a quello suggerito
-		// scala la marcia rispetto a quella attuale
-		if (gear > 1 && rpm <= gearDown[gear - 1])
-			return gear - 1;
-		else // Altrimenti mantenere l'attuale
-			return gear;
+		if (currentGear < 6 && rpm >= gearUp[currentGear - 1]) {
+			lastGearChange = now;
+			return currentGear + 1;
+		}
+
+		if (currentGear > 1 && rpm <= gearDown[currentGear - 1]) {
+			lastGearChange = now;
+			return currentGear - 1;
+		}
+
+		return currentGear;
 	}
 
 	private float getSteer(SensorModel sensors) {
@@ -209,7 +212,7 @@ public class SimpleDriver extends Controller {
 		action.accelerate = (float) prediction[0];
 		action.brake = (float) prediction[1];
 		action.steering = (float) prediction[2];
-		action.gear = (int) prediction[3];
+		action.gear = getGear(sensors);
 		action.clutch = clutching(sensors, clutch);
 
 		return action;
