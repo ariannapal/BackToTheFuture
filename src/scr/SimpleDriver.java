@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset.csv", 31);
+		classifier = new KNNClassifier("dataset.csv", 91);
 	}
 
 	public void reset() {
@@ -186,21 +186,36 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[10]; // basato su CSV manual driver (11 features)
+		double[] features = new double[24]; // basato su CSV manual driver (24 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
 		// + speed + speedY)
-		features[0] = trackSensors[5];
-		features[1] = trackSensors[7];
-		features[2] = trackSensors[9];
-		features[3] = trackSensors[11];
-		features[4] = trackSensors[13];
-		features[5] = sensors.getTrackPosition();
-		features[6] = sensors.getAngleToTrackAxis();
-		features[7] = sensors.getRPM();
-		features[8] = sensors.getSpeed();
-		features[9] = sensors.getLateralSpeed();
+		features[0] = trackSensors[0];
+		features[1] = trackSensors[1];
+		features[2] = trackSensors[2];
+		features[3] = trackSensors[3];
+		features[4] = trackSensors[4];
+		features[5] = trackSensors[5];
+		features[6] = trackSensors[6];
+		features[7] = trackSensors[7];
+		features[8] = trackSensors[8];
+		features[9] = trackSensors[9];
+		features[10] = trackSensors[10];
+		features[11] = trackSensors[11];
+		features[12] = trackSensors[12];
+		features[13] = trackSensors[13];
+		features[14] = trackSensors[14];
+		features[15] = trackSensors[15];
+		features[16] = trackSensors[16];
+		features[17] = trackSensors[17];
+		features[18] = trackSensors[18];
+		features[19] = sensors.getTrackPosition();
+		features[20] = sensors.getAngleToTrackAxis();
+		features[21] = sensors.getRPM();
+		features[22] = sensors.getSpeed();
+		features[23] = sensors.getLateralSpeed();
+		
 
 		Sample currentSample = new Sample(features, new double[4]);
 
@@ -216,7 +231,7 @@ public class SimpleDriver extends Controller {
 		action.clutch = clutching(sensors, clutch);
 
 		// Euristiche
-		applyHeuristics(sensors, action, (float) prediction[2]);
+		//applyHeuristics(sensors, action, (float) prediction[2]);
 
 		return action;
 	}

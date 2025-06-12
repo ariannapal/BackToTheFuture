@@ -9,7 +9,7 @@ public class Sample {
         String[] parts = line.split(",");
         int n = parts.length;
 
-        features = new double[n - 4]; // Tutti tranne gli ultimi 3
+        features = new double[n - 4]; // Tutti tranne gli ultimi 4
         targets = new double[4]; // Ultimi 3: accelerate, brake, steering
 
         for (int i = 0; i < features.length; i++) {
