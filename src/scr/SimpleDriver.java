@@ -48,7 +48,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		 classifier = new KNNClassifier("dataset.csv", 25);
+		 classifier = new KNNClassifier("dataset.csv", 11);
 	}
 
 	public void reset() {
@@ -173,7 +173,7 @@ public Action control(SensorModel sensors) {
     }
 
     // Costruisci il vettore features come nel manual driver
-    double[] features = new double[24]; // basato su CSV manual driver (11 features)
+    double[] features = new double[26]; // basato su CSV manual driver (11 features)
     double[] trackSensors = sensors.getTrackEdgeSensors();
 
     // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
