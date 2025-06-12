@@ -11,7 +11,7 @@ public class KNNClassifier {
     private double[] featureMins;
     private double[] featureMaxs;
 
-    private static final String MINMAX_FILE = "minmaxpari.csv";
+    private static final String MINMAX_FILE = "minmax.csv";
     private static final String LOG_FILE = "log_predizioni.csv";
 
     // Flag per sapere se ho scritto intestazione su log

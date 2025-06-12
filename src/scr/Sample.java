@@ -10,7 +10,7 @@ public class Sample {
         int n = parts.length;
 
         features = new double[n - 4]; // Tutti tranne gli ultimi 4
-        targets = new double[4]; // Ultimi 3: accelerate, brake, steering
+        targets = new double[4]; // Ultimi 4: accelerate, brake, steering
 
         for (int i = 0; i < features.length; i++) {
             features[i] = Double.parseDouble(parts[i].trim());
