@@ -7,27 +7,26 @@ import scr.Controller;
 
 public class ManualDriver extends Controller {
 
-      // Dichiarazione variabili di stato 
+    // Dichiarazione variabili di stato
     private boolean accel = false, brake = false, left = false, right = false, recording = false;
     private int gear = 0;
     private float currentAccel = 0f, currentBrake = 0f, steering = 0f, clutch = 0f;
     private long lastSaveTime = 0;
 
-    private static final long MIN_SAVE_INTERVAL_MS = 100; 
-    
-	final float clutchMax = (float) 0.5;
-	final float clutchDelta = (float) 0.05;
-	final float clutchRange = (float) 0.82;
-	final float clutchDeltaTime = (float) 0.02;
-	final float clutchDeltaRaced = 10;
-	final float clutchDec = (float) 0.01;
-	final float clutchMaxModifier = (float) 1.3;
-	final float clutchMaxTime = (float) 1.5;
+    private static final long MIN_SAVE_INTERVAL_MS = 100;
 
-	/* Costanti di cambio marcia */
-	final int[] gearUp = { 5000, 6000, 6000, 6500, 7000, 0 };
-	final int[] gearDown = { 0, 2500, 3000, 3000, 3500, 3500 };
+    final float clutchMax = (float) 0.5;
+    final float clutchDelta = (float) 0.05;
+    final float clutchRange = (float) 0.82;
+    final float clutchDeltaTime = (float) 0.02;
+    final float clutchDeltaRaced = 10;
+    final float clutchDec = (float) 0.01;
+    final float clutchMaxModifier = (float) 1.3;
+    final float clutchMaxTime = (float) 1.5;
 
+    /* Costanti di cambio marcia */
+    final int[] gearUp = { 5000, 6000, 6000, 6500, 7000, 0 };
+    final int[] gearDown = { 0, 2500, 3000, 3000, 3500, 3500 };
 
     public ManualDriver() {
         JFrame frame = new JFrame("Manual Driver");
@@ -47,14 +46,16 @@ public class ManualDriver extends Controller {
                     case KeyEvent.VK_S -> brake = true;
                     case KeyEvent.VK_A -> left = true;
                     case KeyEvent.VK_D -> right = true;
-                 /*    case KeyEvent.VK_UP -> {
-                        if (gear < 6)
-                            gear++;
-                    }
-                    case KeyEvent.VK_DOWN -> {
-                        if (gear > -1)
-                            gear--;
-                    }  */
+                    /*
+                     * case KeyEvent.VK_UP -> {
+                     * if (gear < 6)
+                     * gear++;
+                     * }
+                     * case KeyEvent.VK_DOWN -> {
+                     * if (gear > -1)
+                     * gear--;
+                     * }
+                     */
 
                     case KeyEvent.VK_1 -> {
                         recording = true;
@@ -86,7 +87,7 @@ public class ManualDriver extends Controller {
 
         action.accelerate = currentAccel;
         action.brake = currentBrake;
-        double speed = sensors.getSpeed();        
+        double speed = sensors.getSpeed();
         double speedY = sensors.getLateralSpeed();
         action.steering = steering;
         action.gear = getGear(sensors);
@@ -113,14 +114,14 @@ public class ManualDriver extends Controller {
 
                         bw.write(
                                 sensors.getDistanceFromStartLine() + "," +
-                                trackSensors[5] + "," +
+                                        trackSensors[5] + "," +
                                         trackSensors[7] + "," +
                                         trackSensors[9] + "," +
                                         trackSensors[11] + "," +
                                         trackSensors[13] + "," +
                                         sensors.getTrackPosition() + "," +
                                         sensors.getAngleToTrackAxis() + "," +
-                                        sensors.getRPM() + "," + 
+                                        sensors.getRPM() + "," +
                                         speed + "," +
                                         speedY + "," +
                                         action.accelerate + "," +
@@ -139,62 +140,62 @@ public class ManualDriver extends Controller {
 
     float clutching(SensorModel sensors, float clutch) {
 
-		float maxClutch = clutchMax;
+        float maxClutch = clutchMax;
 
-		// Controlla se la situazione attuale è l'inizio della gara
-		if (sensors.getCurrentLapTime() < clutchDeltaTime && getStage() == Stage.RACE
-				&& sensors.getDistanceRaced() < clutchDeltaRaced)
-			clutch = maxClutch;
+        // Controlla se la situazione attuale è l'inizio della gara
+        if (sensors.getCurrentLapTime() < clutchDeltaTime && getStage() == Stage.RACE
+                && sensors.getDistanceRaced() < clutchDeltaRaced)
+            clutch = maxClutch;
 
-		// Regolare il valore attuale della frizione
-		if (clutch > 0) {
-			double delta = clutchDelta;
-			if (sensors.getGear() < 2) {
+        // Regolare il valore attuale della frizione
+        if (clutch > 0) {
+            double delta = clutchDelta;
+            if (sensors.getGear() < 2) {
 
-				// Applicare un'uscita più forte della frizione quando la marcia è una e la corsa è appena iniziata.
-				delta /= 2;
-				maxClutch *= clutchMaxModifier;
-				if (sensors.getCurrentLapTime() < clutchMaxTime)
-					clutch = maxClutch;
-			}
+                // Applicare un'uscita più forte della frizione quando la marcia è una e la
+                // corsa è appena iniziata.
+                delta /= 2;
+                maxClutch *= clutchMaxModifier;
+                if (sensors.getCurrentLapTime() < clutchMaxTime)
+                    clutch = maxClutch;
+            }
 
-			// Controllare che la frizione non sia più grande dei valori massimi
-			clutch = Math.min(maxClutch, clutch);
+            // Controllare che la frizione non sia più grande dei valori massimi
+            clutch = Math.min(maxClutch, clutch);
 
-			// Se la frizione non è al massimo valore, diminuisce abbastanza rapidamente
-			if (clutch != maxClutch) {
-				clutch -= delta;
-				clutch = Math.max((float) 0.0, clutch);
-			}
-			// Se la frizione è al valore massimo, diminuirla molto lentamente.
-			else
-				clutch -= clutchDec;
-		}
-		return clutch;
-	}
+            // Se la frizione non è al massimo valore, diminuisce abbastanza rapidamente
+            if (clutch != maxClutch) {
+                clutch -= delta;
+                clutch = Math.max((float) 0.0, clutch);
+            }
+            // Se la frizione è al valore massimo, diminuirla molto lentamente.
+            else
+                clutch -= clutchDec;
+        }
+        return clutch;
+    }
 
-private int getGear(SensorModel sensors) {
-		int gear = sensors.getGear();
-		double rpm = sensors.getRPM();
+    private int getGear(SensorModel sensors) {
+        int gear = sensors.getGear();
+        double rpm = sensors.getRPM();
 
-		// Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
-		if (gear < 1)
-			return 1;
+        // Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
+        if (gear < 1)
+            return 1;
 
-		// Se il valore di RPM dell'auto è maggiore di quello suggerito
-		// sale di marcia rispetto a quella attuale
-		if (gear < 6 && rpm >= gearUp[gear - 1])
-			return gear + 1;
-		else
+        // Se il valore di RPM dell'auto è maggiore di quello suggerito
+        // sale di marcia rispetto a quella attuale
+        if (gear < 6 && rpm >= gearUp[gear - 1])
+            return gear + 1;
+        else
 
-		// Se il valore di RPM dell'auto è inferiore a quello suggerito
-		// scala la marcia rispetto a quella attuale
-		if (gear > 1 && rpm <= gearDown[gear - 1])
-			return gear - 1;
-		else // Altrimenti mantenere l'attuale
-			return gear;
-	}
-
+        // Se il valore di RPM dell'auto è inferiore a quello suggerito
+        // scala la marcia rispetto a quella attuale
+        if (gear > 1 && rpm <= gearDown[gear - 1])
+            return gear - 1;
+        else // Altrimenti mantenere l'attuale
+            return gear;
+    }
 
     @Override
     public void reset() {
@@ -211,7 +212,6 @@ private int getGear(SensorModel sensors) {
         return super.initAngles();
     }
 
-    // funzione aggiunta da Giuliano
     private void updateState() {
         // --- Accelerazione e frenata ---
 
