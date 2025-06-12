@@ -1,5 +1,8 @@
 package scr;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class Normalizer {
@@ -32,15 +35,16 @@ public class Normalizer {
         for (Sample s : samples) {
             for (int i = 0; i < numFeatures; i++) {
                 double val = s.features[i];
-                if (val >= 0) { // ignora valori anomali come -1
+
+                if (isValid(i, val)) {
                     if (val < featureMins[i])
                         featureMins[i] = val;
                     if (val > featureMaxs[i])
                         featureMaxs[i] = val;
                 }
             }
+
             // Calcola i minimi e massimi per i targets
-            // Ignora valori anomali come -1
             for (int i = 0; i < numTargets; i++) {
                 double val = s.targets[i];
                 if (val < targetMins[i])
@@ -49,6 +53,8 @@ public class Normalizer {
                     targetMaxs[i] = val;
             }
         }
+        logTargetMinMaxToFile("log_normalizzazione.txt");
+
     }
 
     // normalizza i campioni di un dataset
@@ -102,4 +108,79 @@ public class Normalizer {
         }
         return denormalized;
     }
+
+    /*
+     * [0–18] Track0–Track18 → Distanze dai bordi (track sensors)
+     * [19] TrackPosition → Posizione rispetto al centro pista ([-1,1])
+     * [20] AngleToTrackAxis → Angolo auto rispetto all’asse della pista ([-π,π])
+     * [21] RPM → Giri motore (>= 0, tipicamente < 20k)
+     * [22] Speed → Velocità longitudinale ([-150, 150])
+     * [23] SpeedY → Velocità laterale ([-100, 100])
+     * [24] DistanceFromStartLine → distanza (>= 0, molto alta in gara lunga)
+     * [25] DistanceRaced → distanza cumulativa (>= 0)
+     * [26] Damage → danno subito (>= 0)
+     * [27–30] Accelerate, Brake, Steering, Gear → TARGET
+     */
+
+    private boolean isValid(int index, double value) {
+        // Track sensors (0–18): validi se diversi da -1
+        if (index >= 0 && index <= 18) {
+            return value != -1.0;
+        }
+
+        // TrackPosition: atteso tra -1 e 1
+        if (index == 19) {
+            return value >= -1.0 && value <= 1.0;
+        }
+
+        // AngleToTrackAxis: atteso tra -π e π
+        if (index == 20) {
+            return value >= -Math.PI && value <= Math.PI;
+        }
+
+        // RPM: da 0 a 20000 (massimo ipotetico)
+        if (index == 21) {
+            return value >= 0 && value <= 20000;
+        }
+
+        // Speed (longitudinale): da -150 a +150 m/s (~540 km/h)
+        if (index == 22) {
+            return value >= -150 && value <= 150;
+        }
+
+        // SpeedY (laterale): da -100 a +100 m/s
+        if (index == 23) {
+            return value >= -100 && value <= 100;
+        }
+
+        // DistanceFromStartLine: sempre >= 0
+        if (index == 24) {
+            return value >= 0;
+        }
+
+        // DistanceRaced: sempre >= 0
+        if (index == 25) {
+            return value >= 0;
+        }
+
+        // Damage: sempre >= 0
+        if (index == 26) {
+            return value >= 0;
+        }
+
+        // Targets (Accelerate, Brake, Steering, Gear): validi sempre qui
+        return true;
+    }
+
+    private void logTargetMinMaxToFile(String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename, true))) {
+            writer.println("=== Target Min/Max ===");
+            writer.println("Min: " + Arrays.toString(targetMins));
+            writer.println("Max: " + Arrays.toString(targetMaxs));
+            writer.println(); // riga vuota
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

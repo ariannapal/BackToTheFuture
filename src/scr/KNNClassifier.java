@@ -99,16 +99,19 @@ public class KNNClassifier {
         int medianIndex = (gears.size() - 1) / 2;
         result[result.length - 1] = gears.get(medianIndex); // attribuisco il valore mediano al risultato
 
-        // Logga la predizione
-        logPrediction(allFeatures, normalized, result);
+        double[] denormResult = normalizer.denormalizeTargets(result);
 
-        return normalizer.denormalizeTargets(result);
+        // Logga sia normalizzati che denormalizzati
+        logPrediction(allFeatures, normalized, result, denormResult);
+
+        return denormResult;
+
     }
 
     private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
-            double[] prediction) {
+            double[] prediction, double[] denormalized) {
+
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
-            // Scrivo intestazione solo la prima volta
             if (!logHeaderWritten) {
                 StringBuilder header = new StringBuilder();
                 for (int i = 0; i < originalFeatures.length; i++) {
@@ -118,25 +121,27 @@ public class KNNClassifier {
                     header.append("norm_feat_").append(i).append(",");
                 }
                 for (int i = 0; i < prediction.length; i++) {
-                    header.append("pred_").append(i);
-                    if (i < prediction.length - 1)
+                    header.append("pred_norm_").append(i).append(",");
+                }
+                for (int i = 0; i < denormalized.length; i++) {
+                    header.append("pred_real_").append(i);
+                    if (i < denormalized.length - 1)
                         header.append(",");
                 }
                 writer.println(header.toString());
                 logHeaderWritten = true;
             }
 
-            // Scrivo la riga con dati
             StringBuilder line = new StringBuilder();
-            for (double f : originalFeatures) {
+            for (double f : originalFeatures)
                 line.append(f).append(",");
-            }
-            for (double f : normalizedFeatures) {
+            for (double f : normalizedFeatures)
                 line.append(f).append(",");
-            }
-            for (int i = 0; i < prediction.length; i++) {
-                line.append(prediction[i]);
-                if (i < prediction.length - 1)
+            for (double f : prediction)
+                line.append(f).append(",");
+            for (int i = 0; i < denormalized.length; i++) {
+                line.append(denormalized[i]);
+                if (i < denormalized.length - 1)
                     line.append(",");
             }
             writer.println(line.toString());
