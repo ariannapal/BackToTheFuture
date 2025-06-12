@@ -12,47 +12,33 @@ public class Normalizer {
 
     // Nome delle feature
     private static final String[] featureNames = {
-            "Track0", "Track1", "Track2", "Track3", "Track4", "Track5", "Track6", "Track7",
-            "Track8", "Track9", "Track10", "Track11", "Track12", "Track13", "Track14", "Track15",
-            "Track16", "Track17", "Track18", "TrackPosition", "AngleToTrackAxis", "RPM", "Speed",
-            "SpeedY", "DistanceFromStartLine", "DistanceRaced", "Damage"
+            "Track2", "Track5",
+            "Track8", "Track9", "Track10", "Track13",
+            "Track16", "TrackPosition", "AngleToTrackAxis", "Speed",
+            "SpeedY"
+
     };
 
     // prendo il nome della feature e il valore associato e
     // Funzione di normalizzazione con valori fissi
+    // Funzione di normalizzazione con valori fissi
     public double normalizeFeature(String featureName, double value) {
         switch (featureName) {
             case "Track0":
-            case "Track1":
-            case "Track2":
-            case "Track3":
             case "Track4":
-            case "Track5":
-            case "Track6":
-            case "Track7":
             case "Track8":
             case "Track9":
             case "Track10":
-            case "Track11":
-            case "Track12":
             case "Track13":
-            case "Track14":
-            case "Track15":
             case "Track16":
-            case "Track17":
-            case "Track18":
                 return value / 200.0; // Normalizza [0, 200] → [0, 1]
-            case "angleToTrackAxis":
+            case "AngleToTrackAxis":
                 return (value + Math.PI) / (2 * Math.PI); // Normalizza [-π, π] → [0, 1]
-            case "distRaced":
-                return value % 5000 / 5000.0; // Normalizza [0, 5000] → [0, 1]
-            case "rpm":
-                return value / 10000.0; // Normalizza [0, 10000] → [0, 1]
-            case "speed":
+            case "Speed":
                 return value / 300.0; // Normalizza [0, 300] → [0, 1]
-            case "lateralSpeed":
+            case "SpeedY":
                 return (value + 100.0) / 200.0; // Normalizza [-100, 100] → [0, 1]
-            case "trackPosition":
+            case "TrackPosition":
                 return (value + 1.0) / 2.0; // Normalizza [-1, 1] → [0, 1]
             default:
                 return value; // Se non è una feature che normalizziamo, ritorna il valore originale
