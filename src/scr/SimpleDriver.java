@@ -180,28 +180,26 @@ public class SimpleDriver extends Controller {
 		}
 
 		double[] features = new double[11]; // basato su CSV manual driver (11 features)
-    double[] trackSensors = sensors.getTrackEdgeSensors();
+		double[] trackSensors = sensors.getTrackEdgeSensors();
 
+		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
+		// + speed + speedY)
+		features[0] = sensors.getDistanceFromStartLine();
+		features[1] = trackSensors[5];
+		features[2] = trackSensors[7];
+		features[3] = trackSensors[9];
+		features[4] = trackSensors[11];
+		features[5] = trackSensors[13];
+		features[6] = sensors.getTrackPosition();
+		features[7] = sensors.getAngleToTrackAxis();
+		features[8] = sensors.getRPM();
+		features[9] = sensors.getSpeed();
+		features[10] = sensors.getLateralSpeed();
 
-    // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
-    features[0] = sensors.getDistanceFromStartLine();
-    features[1] = trackSensors[5];
-    features[2] = trackSensors[7];
-    features[3] = trackSensors[9];
-    features[4] = trackSensors[11];
-    features[5] = trackSensors[13];
-    features[6] = sensors.getTrackPosition();
-    features[7] = sensors.getAngleToTrackAxis();
-    features[8] = sensors.getRPM();
-    features[9] = sensors.getSpeed();
-    features[10] = sensors.getLateralSpeed();
+		Sample currentSample = new Sample(features, new double[3]);
 
-
-    Sample currentSample = new Sample(features, new double[3]);
-
-
-    // Ottieni la predizione dal KNN (accel, brake, steering)
-    double[] prediction = classifier.predict(currentSample);
+		// Ottieni la predizione dal KNN (accel, brake, steering)
+		double[] prediction = classifier.predict(currentSample);
 
 		// Aggiungi qui l’euristica correttiva
 		boolean isAlmostStopped = sensors.getSpeed() < 1.0;
@@ -211,6 +209,21 @@ public class SimpleDriver extends Controller {
 
 		// Aggiungi anche che l’auto non sta frenando
 		boolean noBraking = prediction[1] < 0.1;
+
+		// Aggiungi una condizione per evitare sterzate eccessive in rettilineo
+		// e a bassa velocità
+		// Se la pista è quasi rettilinea e la velocità è bassa, annulla la sterzata
+		// mediaCurvatura(sensors) restituisce un valore tra 0 e 1, quindi una soglia
+		// di 0.05 indica una pista quasi rettilinea
+		// e la velocità è bassa (sotto 2 m/s)
+		// (circa 7.2 km/h)
+		boolean isStraightTrack = mediaCurvatura(sensors) < 0.05;
+		boolean isLowSpeed = sensors.getSpeed() < 2.0;
+
+		// Aggiungi una condizione per evitare sterzate eccessive in rettilineo
+		if (isStraightTrack && isLowSpeed) {
+			prediction[2] = 0.0; // annulla la sterzata in eccesso
+		}
 
 		if (isAlmostStopped && isCentered && isCurvatureMinimal && isLowRPM && noBraking) {
 			prediction[0] = 0.0;
