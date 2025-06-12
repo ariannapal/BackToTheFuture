@@ -72,4 +72,5 @@ public class Sample {
      * return Math.sqrt(sum);
      * }
      */
+
 }
