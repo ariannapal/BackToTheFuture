@@ -136,10 +136,10 @@ public class ManualDriver extends Controller {
                                     "Distanza," +
                                             "Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,"
                                             +
-                                            "Focus1,Focus2,Focus3," +
                                             "TrackPosition,AngleToTrackAxis,Speed,SpeedY,Damage," +
-                                            "DistanceRaced,RPM," +
-                                            "Accelerate,Brake,Steering,Gear\n");
+                                            "DistanceRaced,RPM," + "Gear" +
+                                            "Focus1,Focus2,Focus3," +
+                                            "Accelerate,Brake,Steering\n");
                         }
 
 
@@ -150,6 +150,7 @@ public class ManualDriver extends Controller {
                         double damage = sensors.getDamage();
                         double distanceRaced = sensors.getDistanceRaced();
                         double rpm = sensors.getRPM();
+                        int gear = sensors.getGear();
 
 
                         // Sicurezza
@@ -169,13 +170,6 @@ public class ManualDriver extends Controller {
                             sb.append(trackSensors[i]).append(",");
                         }
 
-
-                        // FocusSensors 0–4
-                        for (int i = 1; i <= 3; i++) {
-                            sb.append(focusSensors[i]).append(",");
-                        }
-
-
                         sb.append(sensors.getTrackPosition()).append(",");
                         sb.append(sensors.getAngleToTrackAxis()).append(",");
                         sb.append(speed).append(",");
@@ -183,14 +177,18 @@ public class ManualDriver extends Controller {
                         sb.append(damage).append(",");
                         sb.append(distanceRaced).append(",");
                         sb.append(rpm).append(",");
+                        sb.append(gear).append(",");
 
+
+                           // FocusSensors 0–4
+                        for (int i = 1; i <= 3; i++) {
+                            sb.append(focusSensors[i]).append(",");
+                        }
 
                         sb.append(action.accelerate).append(",");
                         sb.append(action.brake).append(",");
-                        sb.append(action.steering).append(",");
-                        sb.append(action.gear).append("\n");
-
-
+                        sb.append(action.steering).append("\n");
+                      
                         bw.write(sb.toString());
                     }
 
