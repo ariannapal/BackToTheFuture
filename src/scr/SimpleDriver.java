@@ -183,7 +183,7 @@ public Action control(SensorModel sensors) {
 
     // Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm + speed + speedY)
     //features[0] = sensors.getDistanceFromStartLine();
-    features[0] = trackSensors[3];
+    features[1] = trackSensors[3];
  //   features[2] = trackSensors[4];
     features[3] = trackSensors[5];
   //  features[4] = trackSensors[6];
