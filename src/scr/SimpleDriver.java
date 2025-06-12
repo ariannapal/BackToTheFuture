@@ -179,22 +179,21 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[11]; // basato su CSV manual driver (11 features)
+		double[] features = new double[10]; // basato su CSV manual driver (11 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
 		// + speed + speedY)
-		features[0] = sensors.getDistanceFromStartLine();
-		features[1] = trackSensors[5];
-		features[2] = trackSensors[7];
-		features[3] = trackSensors[9];
-		features[4] = trackSensors[11];
-		features[5] = trackSensors[13];
-		features[6] = sensors.getTrackPosition();
-		features[7] = sensors.getAngleToTrackAxis();
-		features[8] = sensors.getRPM();
-		features[9] = sensors.getSpeed();
-		features[10] = sensors.getLateralSpeed();
+		features[0] = trackSensors[5];
+		features[1] = trackSensors[7];
+		features[2] = trackSensors[9];
+		features[3] = trackSensors[11];
+		features[4] = trackSensors[13];
+		features[5] = sensors.getTrackPosition();
+		features[6] = sensors.getAngleToTrackAxis();
+		features[7] = sensors.getRPM();
+		features[8] = sensors.getSpeed();
+		features[9] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[3]);
 
