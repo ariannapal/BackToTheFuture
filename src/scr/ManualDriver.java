@@ -14,7 +14,7 @@ public class ManualDriver extends Controller {
     private float currentAccel = 0f, currentBrake = 0f, steering = 0f, clutch = 0f;
     private long lastSaveTime = 0;
 
-    private static final long MIN_SAVE_INTERVAL_MS = 10;
+    private static final long MIN_SAVE_INTERVAL_MS = 150;
 
     final float clutchMax = 0.5f;
     final float clutchDelta = 0.05f;
@@ -94,20 +94,22 @@ public class ManualDriver extends Controller {
 
         double speed = sensors.getSpeed();
         double speedY = sensors.getLateralSpeed();
-
+        double distanceFromStartLine = sensors.getDistanceFromStartLine(); 
+        double distanceRaced = sensors.getDistanceRaced(); 
+        double damage = sensors.getDamage(); 
         if (recording) {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastSaveTime >= MIN_SAVE_INTERVAL_MS) {
                 lastSaveTime = currentTime;
                 try {
-                    File file = new File("dataset.csv");
+                    File file = new File("dataset150.csv");
                     boolean fileExists = file.exists();
                     boolean fileIsEmpty = file.length() == 0;
 
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "Track0,Track1,Track2,Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,Track17,Track18,TrackPosition,AngleToTrackAxis,RPM,Speed,SpeedY,Accelerate,Brake,Steering,Gear\n");
+                                    "Track0,Track1,Track2,Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,Track17,Track18,TrackPosition,AngleToTrackAxis,RPM,Speed,SpeedY,DistanceFromStartLine,DistanceRaced,Damage,Accelerate,Brake,Steering,Gear\n");
                         }
                         double[] trackSensors = sensors.getTrackEdgeSensors();
                         bw.write(
@@ -135,6 +137,9 @@ public class ManualDriver extends Controller {
                                         sensors.getRPM() + "," +
                                         speed + "," +
                                         speedY + "," +
+                                        distanceFromStartLine + ","+
+                                        distanceRaced + "," +
+                                        damage + "," +
                                         action.accelerate + "," +
                                         action.brake + "," +
                                         action.steering + "," +
