@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("datasetpari.csv", 25);
+		classifier = new KNNClassifier("dataset0489101418.csv", 51);
 	}
 
 	public void reset() {
@@ -186,35 +186,35 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[14]; // basato su CSV manual driver (24 features)
+		double[] features = new double[12]; // basato su CSV manual driver (24 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
 		// + speed + speedY)
 		features[0] = trackSensors[0];
 		//features[1] = trackSensors[1];
-		features[1] = trackSensors[2];
+		//features[1] = trackSensors[2];
 		//features[3] = trackSensors[3];
-		features[2] = trackSensors[4];
+		features[1] = trackSensors[4];
 		//features[5] = trackSensors[5];
 		//features[3] = trackSensors[6];
-		features[3] = trackSensors[7];
-		//features[4] = trackSensors[8];
-		features[4] = trackSensors[9];
-		//features[6] = trackSensors[10];
-		features[5] = trackSensors[11];
+		//features[3] = trackSensors[7];
+		features[2] = trackSensors[8];
+		features[3] = trackSensors[9];
+		features[4] = trackSensors[10];
+		//features[5] = trackSensors[11];
 		//features[7] = trackSensors[12];
 		//features[13] = trackSensors[13];
-		features[6] = trackSensors[14];
+		features[5] = trackSensors[14];
 		//features[15] = trackSensors[15];
-		features[7] = trackSensors[16];
+		//features[7] = trackSensors[16];
 		//features[17] = trackSensors[17];
-		features[8] = trackSensors[18];
-		features[9] = sensors.getTrackPosition();
-		features[10] = sensors.getAngleToTrackAxis();
-		features[11] = sensors.getRPM();
-		features[12] = sensors.getSpeed();
-		features[13] = sensors.getLateralSpeed();
+		features[6] = trackSensors[18];
+		features[7] = sensors.getTrackPosition();
+		features[8] = sensors.getAngleToTrackAxis();
+		features[9] = sensors.getRPM();
+		features[10] = sensors.getSpeed();
+		features[11] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[4]);
 
