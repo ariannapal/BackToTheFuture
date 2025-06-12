@@ -9,7 +9,7 @@ public class KNNTester {
     private static final String OUTPUT_LOG = "predizioni_test.csv";
 
     public static void main(String[] args) {
-        int k = 5;
+        int k = 3;
         double testRatio = 0.2;
 
         // Caricamento e preparazione del dataset
