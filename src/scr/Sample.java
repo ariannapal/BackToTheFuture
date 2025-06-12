@@ -37,39 +37,40 @@ public class Sample {
         this.targets = new double[4];
     }
 
-    //Calcolo distanza euclidea tra le features di due sample
-    
-      public double distance(Sample other) {
-      double sum = 0;
-      for (int i = 0; i < this.features.length; i++) {
-     sum += Math.pow(this.features[i] - other.features[i], 2);
-      }
-      return Math.sqrt(sum);
-      }
-     /*
+    // Calcolo distanza euclidea tra le features di due sample
+
     public double distance(Sample other) {
         double sum = 0;
-
-        // Pesi coerenti con le 10 feature
-        double[] weights = new double[] {
-                0.3, // TrackSensor[5]
-                0.3, // TrackSensor[7]
-                0.4, // TrackSensor[9] (centrale)
-                0.3, // TrackSensor[11]
-                0.3, // TrackSensor[13]
-                1.0, // TrackPosition
-                1.5, // AngleToTrackAxis → fondamentale!
-                0.5, // RPM
-                0.5, // Speed
-                0.7 // LateralSpeed → utile per capire la deriva
-        };
-
-        for (int i = 0; i < features.length; i++) {
-            double diff = this.features[i] - other.features[i];
-            sum += weights[i] * diff * diff;
+        for (int i = 0; i < this.features.length; i++) {
+            sum += Math.pow(this.features[i] - other.features[i], 2);
         }
-
         return Math.sqrt(sum);
-    }*/
+    }
+    /*
+     * public double distance(Sample other) {
+     * double sum = 0;
+     * 
+     * // Pesi coerenti con le 10 feature
+     * double[] weights = new double[] {
+     * 0.3, // TrackSensor[5]
+     * 0.3, // TrackSensor[7]
+     * 0.4, // TrackSensor[9] (centrale)
+     * 0.3, // TrackSensor[11]
+     * 0.3, // TrackSensor[13]
+     * 1.0, // TrackPosition
+     * 1.5, // AngleToTrackAxis → fondamentale!
+     * 0.5, // RPM
+     * 0.5, // Speed
+     * 0.7 // LateralSpeed → utile per capire la deriva
+     * };
+     * 
+     * for (int i = 0; i < features.length; i++) {
+     * double diff = this.features[i] - other.features[i];
+     * sum += weights[i] * diff * diff;
+     * }
+     * 
+     * return Math.sqrt(sum);
+     * }
+     */
 
 }
