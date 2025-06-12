@@ -186,7 +186,7 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[16]; // basato su CSV manual driver (24 features)
+		double[] features = new double[14]; // basato su CSV manual driver (24 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
@@ -197,24 +197,24 @@ public class SimpleDriver extends Controller {
 		//features[3] = trackSensors[3];
 		features[2] = trackSensors[4];
 		//features[5] = trackSensors[5];
-		features[3] = trackSensors[6];
-		//features[7] = trackSensors[7];
-		features[4] = trackSensors[8];
-		features[5] = trackSensors[9];
-		features[6] = trackSensors[10];
-		//features[11] = trackSensors[11];
-		features[7] = trackSensors[12];
+		//features[3] = trackSensors[6];
+		features[3] = trackSensors[7];
+		//features[4] = trackSensors[8];
+		features[4] = trackSensors[9];
+		//features[6] = trackSensors[10];
+		features[5] = trackSensors[11];
+		//features[7] = trackSensors[12];
 		//features[13] = trackSensors[13];
-		features[8] = trackSensors[14];
+		features[6] = trackSensors[14];
 		//features[15] = trackSensors[15];
-		features[9] = trackSensors[16];
+		features[7] = trackSensors[16];
 		//features[17] = trackSensors[17];
-		features[10] = trackSensors[18];
-		features[11] = sensors.getTrackPosition();
-		features[12] = sensors.getAngleToTrackAxis();
-		features[13] = sensors.getRPM();
-		features[14] = sensors.getSpeed();
-		features[15] = sensors.getLateralSpeed();
+		features[8] = trackSensors[18];
+		features[9] = sensors.getTrackPosition();
+		features[10] = sensors.getAngleToTrackAxis();
+		features[11] = sensors.getRPM();
+		features[12] = sensors.getSpeed();
+		features[13] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[4]);
 
