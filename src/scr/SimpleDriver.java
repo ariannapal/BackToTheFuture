@@ -215,19 +215,36 @@ public class SimpleDriver extends Controller {
 		action.gear = getGear(sensors);
 		action.clutch = clutching(sensors, clutch);
 
+		// Euristiche
+		applyHeuristics(sensors, action);
+
 		return action;
 	}
 
-	// Calcola la media della curvatura della pista
-	// utilizzando i sensori della pista
-	private double mediaCurvatura(SensorModel sensors) {
-		double[] track = sensors.getTrackEdgeSensors();
-		double center = track[9];
-		double sum = 0.0;
-		for (int i = 5; i <= 13; i++) {
-			sum += Math.abs(track[i] - center);
+	private void applyHeuristics(SensorModel sensors, Action action) {
+		// frenata d'emergenza in curva veloce
+		// se KNN ha messo brake = 0, questa euristica corregge in tempo reale solo se
+		// sono in curva veloce
+		if (Math.abs(sensors.getAngleToTrackAxis()) > 0.2 && sensors.getSpeed() > 90) {
+			System.out.println("Frenata aumentata in curva: brake = " + action.brake + " → 0.5");
+			action.brake = Math.max(action.brake, 0.5f);
 		}
-		return sum / 9.0;
+
+		// taglio accelerazione in sterzo forte
+		// riduco accelerazione se lo sterzo è forte evitando il sottosterzo, utile per
+		// le curve strette
+		if (Math.abs(action.steering) > 0.3 && sensors.getSpeed() > 80) {
+			action.accelerate *= 0.6f;
+		}
+
+		// recupero posizione se sono troppo fuori pista
+		if (Math.abs(sensors.getTrackPosition()) > 0.8) {
+			action.steering += -Math.signum(sensors.getTrackPosition()) * 0.2f;
+		}
+		// limitatore sterzo ad alta velcita
+		if (sensors.getSpeed() > 120) {
+			action.steering = Math.max(-0.2f, Math.min(0.2f, action.steering));
+		}
 	}
 
 	private float filterABS(SensorModel sensors, float brake) {
