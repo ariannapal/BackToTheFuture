@@ -14,7 +14,7 @@ public class ManualDriver extends Controller {
     private float currentAccel = 0f, currentBrake = 0f, steering = 0f, clutch = 0f;
     private long lastSaveTime = 0;
 
-    private static final long MIN_SAVE_INTERVAL_MS = 150;
+    private static final long MIN_SAVE_INTERVAL_MS = 10;
 
     final float clutchMax = 0.5f;
     final float clutchDelta = 0.05f;
@@ -102,7 +102,7 @@ public class ManualDriver extends Controller {
             if (currentTime - lastSaveTime >= MIN_SAVE_INTERVAL_MS) {
                 lastSaveTime = currentTime;
                 try {
-                    File file = new File("dataset150.csv");
+                    File file = new File("dataset.csv");
                     boolean fileExists = file.exists();
                     boolean fileIsEmpty = file.length() == 0;
 
