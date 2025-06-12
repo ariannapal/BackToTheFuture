@@ -17,9 +17,12 @@ public class KNNClassifier {
     // Flag per sapere se ho scritto intestazione su log
     private boolean logHeaderWritten = false;
 
-    public KNNClassifier(String filename, int k) {
+    private int[] selectedFeatureIndices;
+
+    public KNNClassifier(String filename, int k, int[] selectedFeatureIndices) {
         this.trainingData = new ArrayList<>();
         this.k = k;
+        this.selectedFeatureIndices = selectedFeatureIndices;
 
         List<Sample> rawSamples = readRawSamples(filename);
 
@@ -133,6 +136,7 @@ public class KNNClassifier {
     }
 
     public double[] predict(Sample testPoint) {
+        double[] allFeatures = testPoint.features;
         double[] originalFeatures = testPoint.features.clone(); // copia dati originali
         double[] normalizedFeatures = normalizeFeatures(originalFeatures);
         testPoint.features = normalizedFeatures;
@@ -159,8 +163,8 @@ public class KNNClassifier {
             result[i] /= totalWeight;
         }
 
-        // Loggo la predizione con dati input e normalizzati
-        logPrediction(originalFeatures, normalizedFeatures, result);
+        // Logga la predizione
+        logPrediction(allFeatures, normalizedSelected, result);
 
         return result;
     }
