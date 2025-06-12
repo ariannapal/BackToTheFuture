@@ -194,33 +194,29 @@ public class ManualDriver extends Controller {
         return super.initAngles();
     }
 
-    private void updateState(SensorModel sensors) {
-        if (accel) {
-            currentAccel += 0.2f;
-            if (currentAccel > 1f) currentAccel = 1f;
-        }
+        private void updateState() {
+    // Gestione acceleratore
+    if (accel && !brake) {
+        currentAccel = 1f;
+        currentBrake = 0f;
+    } else if (brake) {
+        currentAccel = 0f;
+        currentBrake = 0.6f;
+    } else {
+        // né accel né brake premuti
+        currentAccel = 0f;
+        currentBrake = 0f;
+    }
 
-        if (brake) {
-            currentAccel = Math.max(0f, currentAccel - 0.4f);
-            currentBrake += 0.2f;
-            if (currentBrake > 1f) currentBrake = 1f;
-        } else {
-            currentBrake -= 0.3f;
-            if (currentBrake < 0f) currentBrake = 0f;
-        }
 
-        if (!accel && !brake) {
-            currentAccel = Math.max(0f, currentAccel - 0.2f);
-        }
-
-        if (left) {
-            if(sensors.getSpeed()<40) steering =1.0f; 
-            steering = 0.3f;
-        } else if (right) {
-            if(sensors.getSpeed()<40) steering = 1.0f; 
-            steering = -0.3f;
-        } else {
-            steering = 0f;
+    // Gestione sterzo
+    if (left) {
+        steering = 0.3f;
+    } else if (right) {
+        steering = -0.3f;
+    } else {
+        steering = 0f;
     }
 }
+
 }
