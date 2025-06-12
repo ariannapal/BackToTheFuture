@@ -7,11 +7,7 @@ public class KNNClassifier {
     private List<Sample> trainingData;
     private KDTree kdtree;
     private int k;
-
-    private double[] featureMins;
-    private double[] featureMaxs;
-
-    private static final String MINMAX_FILE = "minmax.csv";
+    private Normalizer normalizer;
     private static final String LOG_FILE = "log_predizioni.csv";
 
     // Flag per sapere se ho scritto intestazione su log
@@ -26,24 +22,25 @@ public class KNNClassifier {
         if (rawSamples.isEmpty()) {
             throw new RuntimeException("Dataset vuoto!");
         }
-
-        computeMinMax(rawSamples);
-        saveMinMaxToCSV(MINMAX_FILE);
-        normalizeSamples(rawSamples);
+        this.normalizer = new Normalizer();
+        normalizer.computeMinMax(rawSamples);
+        normalizer.normalizeSamples(rawSamples);
 
         this.trainingData = rawSamples;
         this.kdtree = new KDTree(trainingData);
+
     }
 
     // Costruttore che accetta direttamente i dati di addestramento
     // già normalizzati e le etichette
     // (utilizzato per testare il classificatore con dati già pronti)
     public KNNClassifier(List<Sample> trainingData, int k) {
-        this.trainingData = new ArrayList<>(trainingData);
         this.k = k;
+        this.normalizer = new Normalizer();
+        this.normalizer.computeMinMax(trainingData);
+        this.normalizer.normalizeSamples(trainingData);
 
-        computeMinMax(this.trainingData);
-        normalizeSamples(this.trainingData);
+        this.trainingData = new ArrayList<>(trainingData);
         this.kdtree = new KDTree(this.trainingData);
     }
 
@@ -65,80 +62,18 @@ public class KNNClassifier {
         return rawSamples;
     }
 
-    private void computeMinMax(List<Sample> samples) {
-        int numFeatures = samples.get(0).features.length;
-        featureMins = new double[numFeatures];
-        featureMaxs = new double[numFeatures];
-        Arrays.fill(featureMins, Double.POSITIVE_INFINITY);
-        Arrays.fill(featureMaxs, Double.NEGATIVE_INFINITY);
-
-        for (Sample s : samples) {
-            for (int i = 0; i < numFeatures; i++) {
-                if (s.features[i] < featureMins[i])
-                    featureMins[i] = s.features[i];
-                if (s.features[i] > featureMaxs[i])
-                    featureMaxs[i] = s.features[i];
-            }
-        }
-    }
-
-    private void normalizeSamples(List<Sample> samples) {
-        int numFeatures = featureMins.length;
-        for (Sample s : samples) {
-            for (int i = 0; i < numFeatures; i++) {
-                if (featureMaxs[i] == featureMins[i]) {
-                    s.features[i] = 0;
-                } else {
-                    s.features[i] = (s.features[i] - featureMins[i]) / (featureMaxs[i] - featureMins[i]);
-                }
-            }
-        }
-    }
-
-    public double[] normalizeFeatures(double[] features) {
-        double[] normalized = new double[features.length];
-        for (int i = 0; i < features.length; i++) {
-            if (featureMaxs[i] == featureMins[i]) {
-                normalized[i] = 0;
-            } else {
-                normalized[i] = (features[i] - featureMins[i]) / (featureMaxs[i] - featureMins[i]);
-            }
-        }
-        return normalized;
-    }
-
-    private void saveMinMaxToCSV(String filename) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            for (int i = 0; i < featureMins.length; i++) {
-                writer.print(featureMins[i]);
-                if (i < featureMins.length - 1)
-                    writer.print(",");
-            }
-            writer.println();
-
-            for (int i = 0; i < featureMaxs.length; i++) {
-                writer.print(featureMaxs[i]);
-                if (i < featureMaxs.length - 1)
-                    writer.print(",");
-            }
-            writer.println();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private List<Sample> findKNearest(Sample testPoint) {
         return kdtree.kNearestNeighbors(testPoint, k);
     }
 
     public double[] predict(Sample testPoint) {
         double[] allFeatures = testPoint.features;
-        double[] originalFeatures = testPoint.features.clone(); // copia dati originali
-        double[] normalizedFeatures = normalizeFeatures(originalFeatures);
-        testPoint.features = normalizedFeatures;
+
+        double[] normalized = normalizer.normalizeFeatures(testPoint.features.clone());
+        testPoint.features = normalized;
 
         List<Sample> neighbors = findKNearest(testPoint);
+
         double[] result = new double[4]; // accelerazione, frenata, sterzata, marcia
 
         // Media semplice dei target per i primi 3
@@ -151,6 +86,7 @@ public class KNNClassifier {
         for (int i = 0; i < (result.length - 1); i++) {
             result[i] /= neighbors.size();
         }
+
         // per gear, prendo il valore medio (mediana)
         List<Integer> gears = new ArrayList<>();
         for (Sample s : neighbors) { // per ogni sample vicino
@@ -164,9 +100,9 @@ public class KNNClassifier {
         result[result.length - 1] = gears.get(medianIndex); // attribuisco il valore mediano al risultato
 
         // Logga la predizione
-        logPrediction(allFeatures, normalizedFeatures, result);
+        logPrediction(allFeatures, normalized, result);
 
-        return result;
+        return normalizer.denormalizeTargets(result);
     }
 
     private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,

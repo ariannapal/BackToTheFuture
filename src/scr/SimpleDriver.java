@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset0489101418.csv", 25);
+		classifier = new KNNClassifier("datasetpari.csv", 25);
 	}
 
 	public void reset() {
@@ -159,9 +159,41 @@ public class SimpleDriver extends Controller {
 			return (float) 0.3;
 	}
 
+	// Nuova funzione per riprendersi
+	public Action recover(SensorModel sensors) {
+		float steer = (float) (-sensors.getAngleToTrackAxis() / steerLock);
+		int gear = -1;
+
+		// se siamo abbastanza allineati e centrati, proviamo ad avanzare invece di
+		// retrocedere
+		if (Math.abs(sensors.getAngleToTrackAxis()) < 0.1 && Math.abs(sensors.getTrackPosition()) < 0.5) {
+			gear = 1;
+			steer = 0;
+		}
+
+		clutch = clutching(sensors, clutch);
+		Action recovery = new Action();
+		recovery.gear = gear;
+		recovery.steering = steer;
+		recovery.accelerate = 1.0f;
+		recovery.brake = 0f;
+		recovery.clutch = clutch;
+
+		System.out.println("Recovery mode: gear=" + gear + ", steer=" + steer);
+		return recovery;
+	}
+
 	public Action control(SensorModel sensors) {
 		// Gestione recupero in caso di auto bloccata
-		if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
+		/*
+		 * if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
+		 * stuck++;
+		 * } else {
+		 * stuck = 0;
+		 * }
+		 */
+		if ((Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle && sensors.getSpeed() < 5)
+				|| sensors.getSpeed() < 1.5) {
 			stuck++;
 		} else {
 			stuck = 0;
@@ -186,35 +218,35 @@ public class SimpleDriver extends Controller {
 			return action;
 		}
 
-		double[] features = new double[12]; // basato su CSV manual driver (24 features)
+		double[] features = new double[16]; // basato su CSV manual driver (24 features)
 		double[] trackSensors = sensors.getTrackEdgeSensors();
 
 		// Indici scelti coerenti con manual driver (6 sensori + trackPos + angle + rpm
 		// + speed + speedY)
 		features[0] = trackSensors[0];
 		// features[1] = trackSensors[1];
-		// features[1] = trackSensors[2];
+		features[1] = trackSensors[2];
 		// features[3] = trackSensors[3];
-		features[1] = trackSensors[4];
+		features[2] = trackSensors[4];
 		// features[5] = trackSensors[5];
-		// features[3] = trackSensors[6];
-		// features[3] = trackSensors[7];
-		features[2] = trackSensors[8];
-		features[3] = trackSensors[9];
-		features[4] = trackSensors[10];
-		// features[5] = trackSensors[11];
-		// features[7] = trackSensors[12];
+		features[3] = trackSensors[6];
+		// features[7] = trackSensors[7];
+		features[4] = trackSensors[8];
+		features[5] = trackSensors[9];
+		features[6] = trackSensors[10];
+		// features[11] = trackSensors[11];
+		features[7] = trackSensors[12];
 		// features[13] = trackSensors[13];
-		features[5] = trackSensors[14];
+		features[8] = trackSensors[14];
 		// features[15] = trackSensors[15];
-		// features[7] = trackSensors[16];
+		features[9] = trackSensors[16];
 		// features[17] = trackSensors[17];
-		features[6] = trackSensors[18];
-		features[7] = sensors.getTrackPosition();
-		features[8] = sensors.getAngleToTrackAxis();
-		features[9] = sensors.getRPM();
-		features[10] = sensors.getSpeed();
-		features[11] = sensors.getLateralSpeed();
+		features[10] = trackSensors[18];
+		features[11] = sensors.getTrackPosition();
+		features[12] = sensors.getAngleToTrackAxis();
+		features[13] = sensors.getRPM();
+		features[14] = sensors.getSpeed();
+		features[15] = sensors.getLateralSpeed();
 
 		Sample currentSample = new Sample(features, new double[4]);
 
@@ -236,41 +268,27 @@ public class SimpleDriver extends Controller {
 	}
 
 	private void applyHeuristics(SensorModel sensors, Action action, float predictedSteering) {
-		boolean inCurve = isCurving(sensors, predictedSteering);
+		boolean isCurving = Math.abs(getCurveRatio(sensors)) > 0.2
+				|| Math.abs(action.steering) > 0.3
+				|| Math.abs(sensors.getAngleToTrackAxis()) > 0.2;
 
-		// Frenata automatica se sei in curva stretta ad alta velocità
-		if (inCurve && sensors.getSpeed() > 90) {
-			System.out.println("In curva veloce, applico frenata");
-			action.brake = Math.max(action.brake, 0.5f);
+		if (isCurving && sensors.getSpeed() > 90) {
+			float curveRatio = Math.abs(getCurveRatio(sensors));
+			action.brake = Math.max(action.brake, Math.min(1.0f, curveRatio * 1.5f));
 		}
 
-		// Taglio accelerazione se curva stretta
-		if (Math.abs(predictedSteering) > 0.3 && sensors.getSpeed() > 80) {
-			System.out.println("Sterzata forte a velocità elevata, riduco accelerazione");
+		if (isCurving && Math.abs(action.steering) > 0.3 && sensors.getSpeed() > 80) {
 			action.accelerate *= 0.6f;
 		}
 
-		// Rientro dalla traiettoria se sei troppo fuori
-		if (Math.abs(sensors.getTrackPosition()) > 0.8) {
-			System.out.println("Troppo fuori pista, rientro automatico");
-			action.steering += -Math.signum(sensors.getTrackPosition()) * 0.2f;
-		}
-
-		// Stabilizzatore sterzo ad alta velocità
-		if (sensors.getSpeed() > 120) {
-			action.steering = Math.max(-0.2f, Math.min(0.2f, action.steering));
-		}
 	}
 
-	private boolean isCurving(SensorModel sensors, float predictedSteering) {
+	private float getCurveRatio(SensorModel sensors) {
 		double[] t = sensors.getTrackEdgeSensors();
-		float angle = (float) Math.abs(sensors.getAngleToTrackAxis());
-		float steer = Math.abs(predictedSteering);
-		double pos = Math.abs(sensors.getTrackPosition());
-		float curvature = (float) ((t[11] + t[13]) - (t[5] + t[7]));
-		double curveRatio = curvature / (t[9] + 1e-5f);
-
-		return (angle > 0.2 || steer > 0.3 || pos > 0.6 || Math.abs(curveRatio) > 0.2);
+		float left = (float) (t[5] + t[7]);
+		float right = (float) (t[11] + t[13]);
+		float center = (float) (t[9] + 1e-5); // prevenzione divisione per 0
+		return (right - left) / center; // positivo = curva a destra, negativo = a sinistra
 	}
 
 	private float filterABS(SensorModel sensors, float brake) {
