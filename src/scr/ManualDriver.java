@@ -78,7 +78,7 @@ public class ManualDriver extends Controller {
                 }
             }
         });
-    }  // <--- Qui chiudo il costruttore ManualDriver
+    } // <--- Qui chiudo il costruttore ManualDriver
 
     @Override
     public Action control(SensorModel sensors) {
@@ -106,7 +106,8 @@ public class ManualDriver extends Controller {
 
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
-                            bw.write("Track5,Track7,Track9,Track11,Track13,TrackPosition,AngleToTrackAxis,RPM,Speed,SpeedY,Accelerate,Brake,Steering,Gear\n");
+                            bw.write(
+                                    "Track5,Track7,Track9,Track11,Track13,TrackPosition,AngleToTrackAxis,RPM,Speed,SpeedY,Accelerate,Brake,Steering,Gear\n");
                         }
                         double[] trackSensors = sensors.getTrackEdgeSensors();
                         bw.write(
@@ -167,12 +168,16 @@ public class ManualDriver extends Controller {
         int gear = sensors.getGear();
         double rpm = sensors.getRPM();
 
-        if (manual) return -1;
+        if (manual)
+            return -1;
 
         if (automatic) {
-            if (gear < 1) return 1;
-            if (gear < 6 && rpm >= gearUp[gear - 1]) return gear + 1;
-            if (gear > 1 && rpm <= gearDown[gear - 1]) return gear - 1;
+            if (gear < 1)
+                return 1;
+            if (gear < 6 && rpm >= gearUp[gear - 1])
+                return gear + 1;
+            if (gear > 1 && rpm <= gearDown[gear - 1])
+                return gear - 1;
             return gear;
         }
 
@@ -194,29 +199,27 @@ public class ManualDriver extends Controller {
         return super.initAngles();
     }
 
-        private void updateState() {
-    // Gestione acceleratore
-    if (accel && !brake) {
-        currentAccel = 1f;
-        currentBrake = 0f;
-    } else if (brake) {
-        currentAccel = 0f;
-        currentBrake = 0.6f;
-    } else {
-        // né accel né brake premuti
-        currentAccel = 0f;
-        currentBrake = 0f;
+    private void updateState() {
+        // Gestione acceleratore
+        if (accel && !brake) {
+            currentAccel = 1f;
+            currentBrake = 0f;
+        } else if (brake) {
+            currentAccel = 0f;
+            currentBrake = 0.6f;
+        } else {
+            // né accel né brake premuti
+            currentAccel = 0f;
+            currentBrake = 0f;
+        }
+        // Gestione sterzo
+        if (left) {
+            steering = 0.3f;
+        } else if (right) {
+            steering = -0.3f;
+        } else {
+            steering = 0f;
+        }
     }
-
-
-    // Gestione sterzo
-    if (left) {
-        steering = 0.3f;
-    } else if (right) {
-        steering = -0.3f;
-    } else {
-        steering = 0f;
-    }
-}
 
 }
