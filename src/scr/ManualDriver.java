@@ -118,7 +118,7 @@ public class ManualDriver extends Controller {
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "DistFromStart,TrackLeft, TrackCenterLeft, TrackCenter, TrackCenterRight, TrackRight,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering \n");
+                                    "Track5, Track7, Track9, Track11, Track13,TrackPosition,AngleToTrackAxis, RPM,Speed, SpeedY,Accelerate,Brake,Steering \n");
 
 
                         }
@@ -126,7 +126,6 @@ public class ManualDriver extends Controller {
 
 
                         bw.write(
-                               distance + "," +
                                 trackSensors[5] + "," +
                                         trackSensors[7] + "," +
                                         trackSensors[9] + "," +
