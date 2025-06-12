@@ -168,7 +168,7 @@ public class KNNClassifier {
 
         return result;
     }
-
+//debrah
     private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
             double[] prediction) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
