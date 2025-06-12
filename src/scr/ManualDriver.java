@@ -137,7 +137,7 @@ public class ManualDriver extends Controller {
                                             "Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,"
                                             +
                                             "TrackPosition,AngleToTrackAxis,Speed,SpeedY,Damage," +
-                                            "DistanceRaced,RPM," + "Gear" +
+                                            "DistanceRaced,RPM," + "Gear," +
                                             "Focus1,Focus2,Focus3," +
                                             "Accelerate,Brake,Steering\n");
                         }
