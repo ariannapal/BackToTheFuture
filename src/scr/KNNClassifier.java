@@ -139,7 +139,7 @@ public class KNNClassifier {
         testPoint.features = normalizedFeatures;
 
         List<Sample> neighbors = findKNearest(testPoint);
-        double[] result = new double[3];
+        double[] result = new double[4];
         // Aggiunta una media Pesata
         double totalWeight = 0.0;
 
@@ -151,7 +151,7 @@ public class KNNClassifier {
             double weight = 1.0 / (dist + 1e-6); // evita divisione per zero
             totalWeight += weight;
 
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 result[i] += weight * s.targets[i];
             }
         }

@@ -2,9 +2,13 @@ package scr;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.Locale;
 
 public class SimpleDriver extends Controller {
+	private static boolean logHeaderWritten = false;
 
 	private KNNClassifier classifier;
 	/* Costanti di cambio marcia */
@@ -195,7 +199,7 @@ public class SimpleDriver extends Controller {
 		features[8] = sensors.getSpeed();
 		features[9] = sensors.getLateralSpeed();
 
-		Sample currentSample = new Sample(features, new double[3]);
+		Sample currentSample = new Sample(features, new double[4]);
 
 		// Ottieni la predizione dal KNN (accel, brake, steering)
 		double[] prediction = classifier.predict(currentSample);
@@ -230,12 +234,31 @@ public class SimpleDriver extends Controller {
 
 		// FINE AGGIUNTE
 
+		// CODICE PER MEMORIZZARE LE STERZATE
+		try (PrintWriter writer = new PrintWriter(new FileWriter("sterzate_guida.csv", true))) {
+			if (!logHeaderWritten) {
+				writer.println("pred_steer,angleToTrackAxis,trackPosition,speed");
+				logHeaderWritten = true;
+			}
+
+			double predSteer = prediction[2];
+			double angle = sensors.getAngleToTrackAxis();
+			double trackPos = sensors.getTrackPosition();
+			double speed = sensors.getSpeed();
+
+			writer.printf(Locale.US, "%.4f,%.4f,%.4f,%.4f\n",
+					predSteer, angle, trackPos, speed);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// Costruisci l'azione
 		Action action = new Action();
 		action.accelerate = (float) prediction[0];
 		action.brake = (float) prediction[1];
 		action.steering = (float) prediction[2];
-		action.gear = getGear(sensors);
+		action.gear = (int) prediction[3];
 		action.clutch = clutching(sensors, clutch);
 
 		return action;
