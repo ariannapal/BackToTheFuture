@@ -47,7 +47,7 @@ public class ManualDriver extends Controller {
                     case KeyEvent.VK_S -> brake = true;
                     case KeyEvent.VK_A -> left = true;
                     case KeyEvent.VK_D -> right = true;
-<<<<<<< HEAD
+                    case KeyEvent.VK_R -> reverse = !reverse; // retromarcia
                     /*
                      * case KeyEvent.VK_UP -> {
                      * if (gear < 6)
@@ -58,17 +58,6 @@ public class ManualDriver extends Controller {
                      * gear--;
                      * }
                      */
-=======
-                      case KeyEvent.VK_R -> reverse = !reverse; // retromarcia
-                 /*    case KeyEvent.VK_UP -> {
-                        if (gear < 6)
-                            gear++;
-                    }
-                    case KeyEvent.VK_DOWN -> {
-                        if (gear > -1)
-                            gear--;
-                    }  */
->>>>>>> e8441f8de7dae15c236249a33206da3bcf91e694
 
                     case KeyEvent.VK_1 -> {
                         recording = true;
@@ -78,7 +67,7 @@ public class ManualDriver extends Controller {
                         recording = false;
                         System.out.println("Scrittura disattivata");
                     }
-                    
+
                 }
             }
 
@@ -128,13 +117,9 @@ public class ManualDriver extends Controller {
                         double[] trackSensors = sensors.getTrackEdgeSensors();
 
                         bw.write(
-<<<<<<< HEAD
+
                                 sensors.getDistanceFromStartLine() + "," +
                                         trackSensors[5] + "," +
-=======
-                               sensors.getDistanceFromStartLine() + "," +
-                                trackSensors[5] + "," +
->>>>>>> e8441f8de7dae15c236249a33206da3bcf91e694
                                         trackSensors[7] + "," +
                                         trackSensors[9] + "," +
                                         trackSensors[11] + "," +
@@ -195,34 +180,23 @@ public class ManualDriver extends Controller {
         return clutch;
     }
 
-<<<<<<< HEAD
     private int getGear(SensorModel sensors) {
         int gear = sensors.getGear();
         double rpm = sensors.getRPM();
+        double speed = sensors.getSpeed();
 
+        // Se l'utente vuole la retromarcia e la velocità è bassa, forza retromarcia
+        if (reverse && speed < 0.5) {
+            return -1;
+        }
+
+        // Se siamo in retromarcia e l'utente non vuole più retromarcia, cambia in prima
+        if (!reverse && gear == -1) {
+            return 1;
+        }
         // Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
         if (gear < 1)
             return 1;
-=======
-private int getGear(SensorModel sensors) {
-		int gear = sensors.getGear();
-		double rpm = sensors.getRPM();
-        double speed = sensors.getSpeed(); 
-        
-        
-    // Se l'utente vuole la retromarcia e la velocità è bassa, forza retromarcia
-    if (reverse && speed < 0.5) {
-        return -1;
-    }
-
-    // Se siamo in retromarcia e l'utente non vuole più retromarcia, cambia in prima
-    if (!reverse && gear == -1) {
-        return 1;
-    }
-		// Se la marcia è 0 (N) o -1 (R) restituisce semplicemente 1
-		if (gear < 1)
-			return 1;
->>>>>>> e8441f8de7dae15c236249a33206da3bcf91e694
 
         // Se il valore di RPM dell'auto è maggiore di quello suggerito
         // sale di marcia rispetto a quella attuale

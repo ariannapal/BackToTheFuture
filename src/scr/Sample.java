@@ -27,6 +27,12 @@ public class Sample {
         this.targets = targets;
     }
 
+    // costruttore che prende in ingresso solo le feature, usato quando ricevo gli input 
+      public Sample(double[] features) {
+        this.features = features;
+        this.targets = new double[3];
+    }
+
     // Calcolo distanza euclidea tra le features di due sample
     public double distance(Sample other) {
         double sum = 0;
