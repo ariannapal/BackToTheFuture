@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset.csv", 91);
+		classifier = new KNNClassifier("dataset.csv", 31);
 	}
 
 	public void reset() {
