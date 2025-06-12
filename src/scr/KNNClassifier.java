@@ -8,14 +8,35 @@ public class KNNClassifier {
     private KDTree kdtree;
     private int k;
 
+    private double[] featureMins;
+    private double[] featureMaxs;
+
+    private static final String MINMAX_FILE = "minmax.csv";
+    private static final String LOG_FILE = "log_predizioni.csv";
+
+    // Flag per sapere se ho scritto intestazione su log
+    private boolean logHeaderWritten = false;
+
     public KNNClassifier(String filename, int k) {
         this.trainingData = new ArrayList<>();
         this.k = k;
-        readPointsFromCSV(filename);
-        kdtree = new KDTree(trainingData);
+
+        List<Sample> rawSamples = readRawSamples(filename);
+
+        if (rawSamples.isEmpty()) {
+            throw new RuntimeException("Dataset vuoto!");
+        }
+
+        computeMinMax(rawSamples);
+        saveMinMaxToCSV(MINMAX_FILE);
+        normalizeSamples(rawSamples);
+
+        this.trainingData = rawSamples;
+        this.kdtree = new KDTree(trainingData);
     }
 
-    private void readPointsFromCSV(String filename) {
+    private List<Sample> readRawSamples(String filename) {
+        List<Sample> rawSamples = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
             boolean first = true;
@@ -24,22 +45,84 @@ public class KNNClassifier {
                     first = false; // salta intestazione
                     continue;
                 }
-                trainingData.add(new Sample(line));
+                rawSamples.add(new Sample(line));
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return rawSamples;
+    }
+
+    private void computeMinMax(List<Sample> samples) {
+        int numFeatures = samples.get(0).features.length;
+        featureMins = new double[numFeatures];
+        featureMaxs = new double[numFeatures];
+        Arrays.fill(featureMins, Double.POSITIVE_INFINITY);
+        Arrays.fill(featureMaxs, Double.NEGATIVE_INFINITY);
+
+        for (Sample s : samples) {
+            for (int i = 0; i < numFeatures; i++) {
+                if (s.features[i] < featureMins[i]) featureMins[i] = s.features[i];
+                if (s.features[i] > featureMaxs[i]) featureMaxs[i] = s.features[i];
+            }
+        }
+    }
+
+    private void normalizeSamples(List<Sample> samples) {
+        int numFeatures = featureMins.length;
+        for (Sample s : samples) {
+            for (int i = 0; i < numFeatures; i++) {
+                if (featureMaxs[i] == featureMins[i]) {
+                    s.features[i] = 0;
+                } else {
+                    s.features[i] = (s.features[i] - featureMins[i]) / (featureMaxs[i] - featureMins[i]);
+                }
+            }
+        }
+    }
+
+    public double[] normalizeFeatures(double[] features) {
+        double[] normalized = new double[features.length];
+        for (int i = 0; i < features.length; i++) {
+            if (featureMaxs[i] == featureMins[i]) {
+                normalized[i] = 0;
+            } else {
+                normalized[i] = (features[i] - featureMins[i]) / (featureMaxs[i] - featureMins[i]);
+            }
+        }
+        return normalized;
+    }
+
+    private void saveMinMaxToCSV(String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (int i = 0; i < featureMins.length; i++) {
+                writer.print(featureMins[i]);
+                if (i < featureMins.length - 1) writer.print(",");
+            }
+            writer.println();
+
+            for (int i = 0; i < featureMaxs.length; i++) {
+                writer.print(featureMaxs[i]);
+                if (i < featureMaxs.length - 1) writer.print(",");
+            }
+            writer.println();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // Trova i k vicini più simili usando KDTree
     private List<Sample> findKNearest(Sample testPoint) {
         return kdtree.kNearestNeighbors(testPoint, k);
     }
 
-    // Regressione KNN → restituisce [accelerate, brake, steering]
     public double[] predict(Sample testPoint) {
+        double[] originalFeatures = testPoint.features.clone();  // copia dati originali
+        double[] normalizedFeatures = normalizeFeatures(originalFeatures);
+        testPoint.features = normalizedFeatures;
+
         List<Sample> neighbors = findKNearest(testPoint);
-        double[] result = new double[3]; // accelerate, brake, steering
+        double[] result = new double[3];
 
         for (Sample s : neighbors) {
             result[0] += s.targets[0];
@@ -51,6 +134,47 @@ public class KNNClassifier {
             result[i] /= k;
         }
 
+        // Loggo la predizione con dati input e normalizzati
+        logPrediction(originalFeatures, normalizedFeatures, result);
+
         return result;
+    }
+
+    private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures, double[] prediction) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
+            // Scrivo intestazione solo la prima volta
+            if (!logHeaderWritten) {
+                StringBuilder header = new StringBuilder();
+                for (int i = 0; i < originalFeatures.length; i++) {
+                    header.append("orig_feat_").append(i).append(",");
+                }
+                for (int i = 0; i < normalizedFeatures.length; i++) {
+                    header.append("norm_feat_").append(i).append(",");
+                }
+                for (int i = 0; i < prediction.length; i++) {
+                    header.append("pred_").append(i);
+                    if (i < prediction.length - 1) header.append(",");
+                }
+                writer.println(header.toString());
+                logHeaderWritten = true;
+            }
+
+            // Scrivo la riga con dati
+            StringBuilder line = new StringBuilder();
+            for (double f : originalFeatures) {
+                line.append(f).append(",");
+            }
+            for (double f : normalizedFeatures) {
+                line.append(f).append(",");
+            }
+            for (int i = 0; i < prediction.length; i++) {
+                line.append(prediction[i]);
+                if (i < prediction.length - 1) line.append(",");
+            }
+            writer.println(line.toString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
