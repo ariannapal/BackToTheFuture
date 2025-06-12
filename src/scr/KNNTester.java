@@ -5,7 +5,7 @@ import java.util.*;
 
 public class KNNTester {
 
-    private static final String DATASET_PATH = "dataset.csv";
+    private static final String DATASET_PATH = "datasetpari.csv";
     private static final String OUTPUT_LOG = "predizioni_test.csv";
 
     public static void main(String[] args) {

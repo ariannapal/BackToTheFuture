@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset.csv", 91);
+		classifier = new KNNClassifier("datasetpari.csv", 91);
 	}
 
 	public void reset() {
@@ -215,7 +215,6 @@ public class SimpleDriver extends Controller {
 		features[21] = sensors.getRPM();
 		features[22] = sensors.getSpeed();
 		features[23] = sensors.getLateralSpeed();
-		
 
 		Sample currentSample = new Sample(features, new double[4]);
 
@@ -231,7 +230,7 @@ public class SimpleDriver extends Controller {
 		action.clutch = clutching(sensors, clutch);
 
 		// Euristiche
-		//applyHeuristics(sensors, action, (float) prediction[2]);
+		// applyHeuristics(sensors, action, (float) prediction[2]);
 
 		return action;
 	}
