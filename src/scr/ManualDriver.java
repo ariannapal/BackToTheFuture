@@ -139,7 +139,7 @@ public class ManualDriver extends Controller {
                                         action.accelerate + "," +
                                         action.brake + "," +
                                         action.steering + "," +
-                                        action.gear + "\n"; 
+                                        action.gear + "\n" ); 
                     }
 
 

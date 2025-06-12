@@ -197,7 +197,7 @@ public class SimpleDriver extends Controller {
 
 
 
-    Sample currentSample = new Sample(features, new double[3]);
+    Sample currentSample = new Sample(features, new double[4]);
 
 
     // Ottieni la predizione dal KNN (accel, brake, steering)
@@ -223,7 +223,7 @@ public class SimpleDriver extends Controller {
 		action.accelerate = (float) prediction[0];
 		action.brake = (float) prediction[1];
 		action.steering = (float) prediction[2];
-		action.gear = getGear(sensors);
+		action.gear = (int) prediction[3];
 		action.clutch = clutching(sensors, clutch);
 
 		return action;
