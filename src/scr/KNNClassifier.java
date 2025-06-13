@@ -20,7 +20,7 @@ public class KNNClassifier {
 
     // Valori massimi per le features (ad esempio 200 per i sensori)
     private static final double[] featureMaxValues = {
-            200, 200, 200, 200, 200, 200, 200, 1, Math.PI, 300, 100
+            200, 200, 200, 200, 200, 200, 200, 2, Math.PI, 300, 268
     };
     // Minimi e massimi per i target
     private double[] targetMins;
@@ -89,13 +89,15 @@ public class KNNClassifier {
 
         double[] result = new double[4]; // accelerazione, frenata, sterzata, marcia
 
-        // Media semplice dei target per i primi 3
+        // Somma i target dei k vicini
+        // (escludo l'ultimo target che è il gear)
         for (Sample s : neighbors) {
             for (int i = 0; i < (result.length - 1); i++) {
                 result[i] += s.targets[i];
             }
         }
 
+        // Media dei primi 3 target
         for (int i = 0; i < (result.length - 1); i++) {
             result[i] /= neighbors.size();
         }
@@ -167,12 +169,12 @@ public class KNNClassifier {
 
     // Calcola minimi e massimi per i target
     private void computeTargetMinMax(List<Sample> samples) {
-        int numTargets = samples.get(0).targets.length;
+        int numTargets = samples.get(0).targets.length; // Numero di target (accelerazione, frenata, sterzata, marcia)
 
         targetMins = new double[numTargets];
         targetMaxs = new double[numTargets];
 
-        Arrays.fill(targetMins, Double.POSITIVE_INFINITY);
+        Arrays.fill(targetMins, Double.POSITIVE_INFINITY); // Inizializza i minimi a infinito
         Arrays.fill(targetMaxs, Double.NEGATIVE_INFINITY);
 
         for (Sample s : samples) {
@@ -205,7 +207,15 @@ public class KNNClassifier {
         double[] normalized = new double[features.length];
         for (int i = 0; i < features.length; i++) {
             // Usa il massimo definito per ogni feature
-            normalized[i] = features[i] / featureMaxValues[i]; // Normalizzazione feature / xmax
+            if (featureMaxValues[i] == Math.PI) { // Normalizza l'angolo tra -pi e pi
+                normalized[i] = (features[i] + Math.PI) / (2 * Math.PI);
+            } else if (featureMaxValues[i] == 268) { // velocita laterale
+                normalized[i] = (features[i] + 100.0) / 268.0;
+            } else if (featureMaxValues[i] == 2) {
+                normalized[i] = (features[i] + 1.0) / 2.0; // Normalizza la posizione sulla pista tra -1 e 1
+            } else {
+                normalized[i] = features[i] / featureMaxValues[i]; // Normalizzazione feature / xmax
+            }
         }
         return normalized;
     }
