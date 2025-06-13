@@ -53,7 +53,7 @@ public class SimpleDriver extends Controller {
 	private float clutch = 0;
 
 	public SimpleDriver() {
-		classifier = new KNNClassifier("dataset2589101316_10ms.csv", 5);
+		classifier = new KNNClassifier("dataset_50ms.csv", 3);
 	}
 
 	public void reset() {
@@ -185,19 +185,19 @@ public class SimpleDriver extends Controller {
 
 	public Action control(SensorModel sensors) {
 		// Gestione recupero in caso di auto bloccata
-		/*
-		 * if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
-		 * stuck++;
-		 * } else {
-		 * stuck = 0;
-		 * }
-		 */
-		if ((Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle && sensors.getSpeed() < 5)
+		
+		  if (Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle) {
+		  stuck++;
+		  } else {
+		  stuck = 0;
+		  }
+		 
+		/*if ((Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle && sensors.getSpeed() < 5)
 				|| sensors.getSpeed() < 1.5) {
 			stuck++;
 		} else {
 			stuck = 0;
-		}
+		}*/
 
 		if (stuck > stuckTime) {
 			// Recovery logic: retromarcia e sterzo per uscire dalla situazione di

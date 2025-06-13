@@ -14,7 +14,7 @@ public class ManualDriver extends Controller {
     private float currentAccel = 0f, currentBrake = 0f, steering = 0f, clutch = 0f;
     private long lastSaveTime = 0;
 
-    private static final long MIN_SAVE_INTERVAL_MS = 10;
+    private static final long MIN_SAVE_INTERVAL_MS = 50;
 
     final float clutchMax = 0.5f;
     final float clutchDelta = 0.05f;
@@ -102,44 +102,36 @@ public class ManualDriver extends Controller {
             if (currentTime - lastSaveTime >= MIN_SAVE_INTERVAL_MS) {
                 lastSaveTime = currentTime;
                 try {
-                    File file = new File("dataset.csv");
+                    File file = new File("dataset_50ms.csv");
                     boolean fileExists = file.exists();
                     boolean fileIsEmpty = file.length() == 0;
 
                     try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
                         if (!fileExists || fileIsEmpty) {
                             bw.write(
-                                    "Track0,Track1,Track2,Track3,Track4,Track5,Track6,Track7,Track8,Track9,Track10,Track11,Track12,Track13,Track14,Track15,Track16,Track17,Track18,TrackPosition,AngleToTrackAxis,RPM,Speed,SpeedY,DistanceFromStartLine,DistanceRaced,Damage,Accelerate,Brake,Steering,Gear\n");
+                                    "Track2,Track5,Track8,Track9,Track10,Track13,Track16,TrackPosition,AngleToTrackAxis,Speed,SpeedY,Accelerate,Brake,Steering,Gear\n");
                         }
                         double[] trackSensors = sensors.getTrackEdgeSensors();
                         bw.write(
-                                trackSensors[0] + "," +
-                                trackSensors[1] + "," +
+                                
                                 trackSensors[2] + "," +
-                                trackSensors[3] + "," +
-                                trackSensors[4] + "," +
+                               
                                 trackSensors[5] + "," +
-                                trackSensors[6] + "," +
-                                        trackSensors[7] + "," +
+                               
                                         trackSensors[8] + "," +
                                         trackSensors[9] + "," +
                                         trackSensors[10] + "," +
-                                        trackSensors[11] + "," +
-                                        trackSensors[12] + "," +
+                                       
                                         trackSensors[13] + "," +
-                                        trackSensors[14] + "," +
-                                        trackSensors[15] + "," +
+                                        
                                         trackSensors[16] + "," +
-                                        trackSensors[17] + "," +
-                                        trackSensors[18] + "," +
+                                        
                                         sensors.getTrackPosition() + "," +
                                         sensors.getAngleToTrackAxis() + "," +
-                                        sensors.getRPM() + "," +
+                                        
                                         speed + "," +
                                         speedY + "," +
-                                        distanceFromStartLine + ","+
-                                        distanceRaced + "," +
-                                        damage + "," +
+                                        
                                         action.accelerate + "," +
                                         action.brake + "," +
                                         action.steering + "," +

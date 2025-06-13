@@ -35,9 +35,9 @@ public class KNNClassifier {
         if (rawSamples.isEmpty()) {
             throw new RuntimeException("Dataset vuoto!");
         }
-
-        computeTargetMinMax(rawSamples);
-        normalizeSamples(rawSamples);
+        //normalizzazione
+       computeTargetMinMax(rawSamples);
+       normalizeSamples(rawSamples);
 
         this.trainingData = rawSamples;
         this.kdtree = new KDTree(trainingData);
@@ -49,7 +49,7 @@ public class KNNClassifier {
     // (utilizzato per testare il classificatore con dati già pronti)
     public KNNClassifier(List<Sample> trainingData, int k) {
         this.k = k;
-
+        //NORMALIZZAZIONE
         computeTargetMinMax(trainingData);
         normalizeSamples(trainingData);
 
@@ -81,7 +81,7 @@ public class KNNClassifier {
 
     public double[] predict(Sample testPoint) {
         double[] allFeatures = testPoint.features;
-
+        //NORMALIZZAZIONE
         double[] normalized = normalizeFeatures(testPoint.features.clone());
         testPoint.features = normalized;
 
@@ -114,58 +114,68 @@ public class KNNClassifier {
         int medianIndex = (gears.size() - 1) / 2;
         result[result.length - 1] = gears.get(medianIndex); // attribuisco il valore mediano al risultato
 
+        //NORMALIZZAZIONE
         double[] denormResult = denormalizeTargets(result);
 
         // Logga sia normalizzati che denormalizzati
-        logPrediction(allFeatures, normalized, result, denormResult);
-
+        logPrediction(allFeatures, result, neighbors);
+        //NORMALIZZAZIONE
         return denormResult;
-
+       //return result; 
     }
 
     // debrah dnsiajifd
-    private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
-            double[] prediction, double[] denormalized) {
+    private synchronized void logPrediction(double[] inputFeatures, double[] prediction, List<Sample> neighbors) {
+    try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
-            if (!logHeaderWritten) {
-                StringBuilder header = new StringBuilder();
-                for (int i = 0; i < originalFeatures.length; i++) {
-                    header.append("orig_feat_").append(i).append(",");
-                }
-                for (int i = 0; i < normalizedFeatures.length; i++) {
-                    header.append("norm_feat_").append(i).append(",");
-                }
-                for (int i = 0; i < prediction.length; i++) {
-                    header.append("pred_norm_").append(i).append(",");
-                }
-                for (int i = 0; i < denormalized.length; i++) {
-                    header.append("pred_real_").append(i);
-                    if (i < denormalized.length - 1)
-                        header.append(",");
-                }
-                writer.println(header.toString());
-                logHeaderWritten = true;
-            }
+        writer.println("Sample:");
+        writer.println("  input:     " + Arrays.toString(inputFeatures));
+        writer.println("  prediction:" + Arrays.toString(prediction));
+        writer.println();
 
-            StringBuilder line = new StringBuilder();
-            for (double f : originalFeatures)
-                line.append(f).append(",");
-            for (double f : normalizedFeatures)
-                line.append(f).append(",");
-            for (double f : prediction)
-                line.append(f).append(",");
-            for (int i = 0; i < denormalized.length; i++) {
-                line.append(denormalized[i]);
-                if (i < denormalized.length - 1)
-                    line.append(",");
-            }
-            writer.println(line.toString());
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = 0; i < neighbors.size(); i++) {
+            Sample neighbor = neighbors.get(i);
+            writer.println("Vicino " + (i + 1) + ":");
+            writer.println("  features: " + Arrays.toString(neighbor.features));
+            writer.println("  target:   " + Arrays.toString(neighbor.targets));
+            writer.println();
         }
+
+        writer.println("--------------------------------------------------");
+
+    } catch (IOException e) {
+        e.printStackTrace();
     }
+}
+
+
+
+/*
+    private synchronized void logPrediction(double[] originalFeatures, double[] normalizedFeatures,
+        double[] prediction, double[] denormalized, List<Sample> neighbors) {
+
+    try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
+
+        writer.println("Sample:");
+        writer.println("  input_originale: " + Arrays.toString(originalFeatures));
+        writer.println("  predizione: " + Arrays.toString(denormalized));
+        writer.println();
+
+        for (int i = 0; i < neighbors.size(); i++) {
+            Sample neighbor = neighbors.get(i);
+            writer.println("Vicino " + (i + 1) + ":");
+            writer.println("  features: " + Arrays.toString(neighbor.features));
+            writer.println("  target:   " + Arrays.toString(neighbor.targets));
+            writer.println();
+        }
+
+        writer.println("--------------------------------------------------");
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+*/
 
     // Calcola minimi e massimi per i target
     private void computeTargetMinMax(List<Sample> samples) {
