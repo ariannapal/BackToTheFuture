@@ -102,7 +102,7 @@ public class ManualDriver extends Controller {
             if (currentTime - lastSaveTime >= MIN_SAVE_INTERVAL_MS) {
                 lastSaveTime = currentTime;
                 try {
-                    File file = new File("dataset_50ms.csv");
+                    File file = new File("dataset_50_destra_sinistra_centro.csv");
                     boolean fileExists = file.exists();
                     boolean fileIsEmpty = file.length() == 0;
 
