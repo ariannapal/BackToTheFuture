@@ -206,15 +206,14 @@ public class KNNClassifier {
 
         double[] normalized = new double[features.length];
         for (int i = 0; i < features.length; i++) {
-            // Usa il massimo definito per ogni feature
             if (featureMaxValues[i] == Math.PI) { // Normalizza l'angolo tra -pi e pi
                 normalized[i] = (features[i] + Math.PI) / (2 * Math.PI);
-            } else if (featureMaxValues[i] == 268) { // velocita laterale
+            } else if (featureMaxValues[i] == 268) { // velocità laterale
                 normalized[i] = (features[i] + 100.0) / 268.0;
-            } else if (featureMaxValues[i] == 2) {
+            } else if (featureMaxValues[i] == 2) { // TrackPosition
                 normalized[i] = (features[i] + 1.0) / 2.0; // Normalizza la posizione sulla pista tra -1 e 1
             } else {
-                normalized[i] = features[i] / featureMaxValues[i]; // Normalizzazione feature / xmax
+                normalized[i] = features[i] / featureMaxValues[i]; // Normalizzazione generica feature / xmax
             }
         }
         return normalized;
